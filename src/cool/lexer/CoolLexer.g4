@@ -84,9 +84,17 @@ STRING: '"' (ESC | ~["\\])* '"' {
 fragment ESC: '\\' [btnf"\\];
 
 // Comments
-LINE_COMMENT: '--' .*? '\r'? '\n' -> skip;
-BLOCK_COMMENT: '(*' (BLOCK_COMMENT | .)*? '*)' -> skip;
 UNMATCHED_COMMENT: '*)' { raiseError("Unmatched *)"); };
+
+BLOCK_COMMENT
+    : '(*' (BLOCK_COMMENT | .)*? ('*)' | EOF) {
+        if (_input.LA(1) == EOF) {
+            setType(ERROR);
+            setText("EOF in comment");
+        } else {
+            skip();
+        }
+    };
 
 // Whitespace
 WS: [ \t\r\n\f]+ -> skip;
