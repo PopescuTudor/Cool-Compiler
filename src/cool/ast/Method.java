@@ -1,5 +1,7 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Token;
+
 import java.util.List;
 
 public class Method extends Feature {
@@ -8,7 +10,8 @@ public class Method extends Feature {
     private String returnType;
     private Expression body;
 
-    public Method(String name, List<Formal> formals, String returnType, Expression body) {
+    public Method(Token token, String name, List<Formal> formals, String returnType, Expression body) {
+        super(token);
         this.name = name;
         this.formals = formals;
         this.returnType = returnType;
@@ -24,5 +27,13 @@ public class Method extends Feature {
         }
         System.out.println(" ".repeat(indentation + 2) + returnType);
         body.print(indentation + 2);
+    }
+
+    public int getLine() {
+        return token.getLine();
+    }
+
+    public int getColumn() {
+        return token.getCharPositionInLine();
     }
 }

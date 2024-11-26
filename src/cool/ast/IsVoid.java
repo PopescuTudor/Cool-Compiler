@@ -1,9 +1,12 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Token;
+
 public class IsVoid extends Expression {
     private Expression expr;
 
-    public IsVoid(Expression expr) {
+    public IsVoid(Token token, Expression expr) {
+        super(token);
         this.expr = expr;
     }
 

@@ -1,5 +1,7 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Token;
+
 import java.util.List;
 
 public class Dispatch extends Expression {
@@ -8,7 +10,8 @@ public class Dispatch extends Expression {
     private String methodName;
     private List<Expression> args;
 
-    public Dispatch(Expression obj, String type, String methodName, List<Expression> args) {
+    public Dispatch(Token token, Expression obj, String type, String methodName, List<Expression> args) {
+        super(token);
         this.obj = obj;
         this.type = type;
         this.methodName = methodName;
@@ -26,5 +29,13 @@ public class Dispatch extends Expression {
         for (Expression arg : args) {
             arg.print(indentation + 2);
         }
+    }
+
+    public int getLine() {
+        return token.getLine();
+    }
+
+    public int getColumn() {
+        return token.getCharPositionInLine();
     }
 }

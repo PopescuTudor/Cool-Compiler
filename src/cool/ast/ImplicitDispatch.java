@@ -1,12 +1,15 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Token;
+
 import java.util.List;
 
 public class ImplicitDispatch extends Expression {
     private String methodName;
     private List<Expression> args;
 
-    public ImplicitDispatch(String methodName, List<Expression> args) {
+    public ImplicitDispatch(Token token, String methodName, List<Expression> args) {
+        super(token);
         this.methodName = methodName;
         this.args = args;
     }
@@ -18,5 +21,13 @@ public class ImplicitDispatch extends Expression {
         for (Expression arg : args) {
             arg.print(indentation + 2);
         }
+    }
+
+    public int getLine() {
+        return token.getLine();
+    }
+
+    public int getColumn() {
+        return token.getCharPositionInLine();
     }
 }

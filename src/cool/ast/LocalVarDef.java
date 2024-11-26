@@ -1,11 +1,14 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Token;
+
 public class LocalVarDef extends ASTNode {
     private String name;
     private String type;
     private Expression init;
 
-    public LocalVarDef(String name, String type, Expression init) {
+    public LocalVarDef(Token token, String name, String type, Expression init) {
+        super(token);
         this.name = name;
         this.type = type;
         this.init = init;
@@ -19,5 +22,13 @@ public class LocalVarDef extends ASTNode {
         if (init != null) {
             init.print(indentation + 2);
         }
+    }
+
+    public int getLine() {
+        return token.getLine();
+    }
+
+    public int getColumn() {
+        return token.getCharPositionInLine();
     }
 }

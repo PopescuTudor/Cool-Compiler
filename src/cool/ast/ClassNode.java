@@ -1,5 +1,7 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Token;
+
 import java.util.List;
 
 public class ClassNode extends ASTNode {
@@ -7,7 +9,8 @@ public class ClassNode extends ASTNode {
     private String parent;
     private List<Feature> features;
 
-    public ClassNode(String name, String parent, List<Feature> features) {
+    public ClassNode(Token token, String name, String parent, List<Feature> features) {
+        super(token);
         this.name = name;
         this.parent = parent;
         this.features = features;
@@ -23,5 +26,13 @@ public class ClassNode extends ASTNode {
         for (Feature feature : features) {
             feature.print(indentation + 2);
         }
+    }
+
+    public int getLine() {
+        return token.getLine();
+    }
+
+    public int getColumn() {
+        return token.getCharPositionInLine();
     }
 }

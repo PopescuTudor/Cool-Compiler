@@ -1,11 +1,14 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Token;
+
 public class Attribute extends Feature {
     private String name;
     private String type;
     private Expression init;
 
-    public Attribute(String name, String type, Expression init) {
+    public Attribute(Token token, String name, String type, Expression init) {
+        super(token);
         this.name = name;
         this.type = type;
         this.init = init;
