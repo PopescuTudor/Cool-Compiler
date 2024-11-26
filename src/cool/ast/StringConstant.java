@@ -9,6 +9,6 @@ public class StringConstant extends Expression {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + "\"" + value + "\"");
+        System.out.println(" ".repeat(indentation) + value);
     }
 }

@@ -11,6 +11,8 @@ public class Formal extends ASTNode {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + "formal : " + name + " " + type);
+        System.out.println(" ".repeat(indentation) + "formal");
+        System.out.println(" ".repeat(indentation + 2) + name);
+        System.out.println(" ".repeat(indentation + 2) + type);
     }
 }

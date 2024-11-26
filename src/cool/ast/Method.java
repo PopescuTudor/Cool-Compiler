@@ -17,10 +17,12 @@ public class Method extends Feature {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + "method : " + name + " " + returnType);
+        System.out.println(" ".repeat(indentation) + "method");
+        System.out.println(" ".repeat(indentation + 2) + name);
         for (Formal formal : formals) {
             formal.print(indentation + 2);
         }
+        System.out.println(" ".repeat(indentation + 2) + returnType);
         body.print(indentation + 2);
     }
 }

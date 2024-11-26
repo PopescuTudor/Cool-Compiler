@@ -10,5 +10,4 @@ public class IntConstant extends Expression {
     @Override
     public void print(int indentation) {
         System.out.println(" ".repeat(indentation) + value);
-    }
-}
+    }}

@@ -11,7 +11,7 @@ public class UnaryOp extends Expression {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + ": " + op + " :");
+        System.out.println(" ".repeat(indentation) + op);
         expr.print(indentation + 2);
     }
 }

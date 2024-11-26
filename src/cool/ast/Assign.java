@@ -11,7 +11,8 @@ public class Assign extends Expression {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + ": <- : " + id);
+        System.out.println(" ".repeat(indentation) + "<-");
+        System.out.println(" ".repeat(indentation + 2) + id);
         expr.print(indentation + 2);
     }
 }

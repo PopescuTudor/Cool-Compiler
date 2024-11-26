@@ -13,7 +13,7 @@ public class BinaryOp extends Expression {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + ": " + op + " :");
+        System.out.println(" ".repeat(indentation) + op);
         left.print(indentation + 2);
         right.print(indentation + 2);
     }

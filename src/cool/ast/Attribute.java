@@ -13,7 +13,9 @@ public class Attribute extends Feature {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + "attribute : " + name + " " + type);
+        System.out.println(" ".repeat(indentation) + "attribute");
+        System.out.println(" ".repeat(indentation + 2) + name);
+        System.out.println(" ".repeat(indentation + 2) + type);
         if (init != null) {
             init.print(indentation + 2);
         }

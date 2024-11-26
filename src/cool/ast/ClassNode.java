@@ -15,7 +15,11 @@ public class ClassNode extends ASTNode {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + "class : " + name + (parent != null ? " " + parent : ""));
+        System.out.println(" ".repeat(indentation) + "class");
+        System.out.println(" ".repeat(indentation + 2) + name);
+        if (parent != null) {
+            System.out.println(" ".repeat(indentation + 2) + parent);
+        }
         for (Feature feature : features) {
             feature.print(indentation + 2);
         }
