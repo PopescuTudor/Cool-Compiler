@@ -62,26 +62,36 @@ OBJECT_ID: [a-z][a-zA-Z0-9_]*;
 // Integer
 INT: [0-9]+;
 
-// String
-STRING: '"' (ESC | ~["\\])* '"' {
+STRING : '"' (ESC | ~["\\])* '"' {
     String content = getText().substring(1, getText().length() - 1);
-    content = content.replace("\\n", "\n")
-                     .replace("\\t", "\t")
-                     .replace("\\b", "\b")
-                     .replace("\\f", "\f");
-
-    if (content.length() > 1024) {
-        raiseError("String constant too long");
-    } else if (content.contains("\0")) {
-        raiseError("String contains null character");
-    } else if (content.contains("\n")) {
-        raiseError("Unterminated string constant");
-    } else {
-        setText(content);
+    StringBuilder processed = new StringBuilder();
+    boolean escaped = false;
+    for (int i = 0; i < content.length(); i++) {
+        char c = content.charAt(i);
+        if (escaped) {
+            switch (c) {
+                case 't': processed.append('\t'); break;
+                case 'n': processed.append('\n'); break;
+                case 'b': processed.append('\b'); break;
+                case 'f': processed.append('\f'); break;
+                case '\\': processed.append('\\'); break;
+                default: processed.append(c); break;
+            }
+            escaped = false;
+        } else if (c == '\\') {
+            escaped = true;
+        } else {
+            processed.append(c);
+        }
     }
+    setText(processed.toString());
 };
 
-fragment ESC: '\\' [btnf"\\];
+fragment ESC : '\\' ([tnbf"\\] | .);
+
+UNTERMINATED_STRING : '"' (ESC | ~["\\])* ('\n' | EOF) {
+    raiseError("Unterminated string constant");
+};
 
 // Comments
 UNMATCHED_COMMENT: '*)' { raiseError("Unmatched *)"); };
