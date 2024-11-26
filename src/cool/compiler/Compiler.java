@@ -10,6 +10,7 @@ import cool.lexer.*;
 import cool.parser.*;
 
 import java.io.*;
+import java.util.List;
 
 
 public class Compiler {

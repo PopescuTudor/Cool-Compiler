@@ -49,6 +49,8 @@ SLASH: '/';
 TILDE: '~';
 LT: '<';
 LE: '<=';
+GE: '>=';
+GT: '>';
 EQUALS: '=';
 DARROW: '=>';
 ASSIGN: '<-';

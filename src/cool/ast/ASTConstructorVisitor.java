@@ -64,6 +64,14 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
     }
 
     @Override
+    public ASTNode visitComparison(CoolParser.ComparisonContext ctx) {
+        Expression left = (Expression) visit(ctx.expr(0));
+        Expression right = (Expression) visit(ctx.expr(1));
+        String op = ctx.getChild(1).getText();
+        return new BinaryOp(op, left, right);
+    }
+
+    @Override
     public ASTNode visitWhile(CoolParser.WhileContext ctx) {
         Expression condition = (Expression) visit(ctx.expr(0));
         Expression body = (Expression) visit(ctx.expr(1));
@@ -141,7 +149,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         Expression left = (Expression) visit(ctx.expr(0));
         Expression right = (Expression) visit(ctx.expr(1));
         String op = ctx.getChild(1).getText();
-        return new BinaryOp(left, op, right);
+        return new BinaryOp(op, left, right);
     }
 
     @Override

@@ -1,13 +1,13 @@
 package cool.ast;
 
 public class BinaryOp extends Expression {
-    private Expression left;
     private String op;
+    private Expression left;
     private Expression right;
 
-    public BinaryOp(Expression left, String op, Expression right) {
-        this.left = left;
+    public BinaryOp(String op, Expression left, Expression right) {
         this.op = op;
+        this.left = left;
         this.right = right;
     }
 

@@ -30,17 +30,10 @@ expr
     | CASE expr OF (OBJECT_ID COLON TYPE_ID DARROW expr SEMICOLON)+ ESAC    # case
     | NEW TYPE_ID                                                           # new
     | ISVOID expr                                                           # isvoid
-    | expr (PLUS | MINUS | STAR | SLASH) expr                                 # binaryOp
-    | (NOT | TILDE) expr                                                # unaryOp
-    | expr PLUS expr                                                        # plus
-    | expr MINUS expr                                                       # minus
-    | expr STAR expr                                                        # mult
-    | expr SLASH expr                                                       # div
-    | TILDE expr                                                            # neg
-    | expr LT expr                                                          # lt
-    | expr LE expr                                                          # le
-    | expr EQUALS expr                                                      # eq
-    | NOT expr                                                              # not
+    | (NOT | TILDE) expr                                                    # unaryOp
+    | expr (STAR | SLASH) expr                                              # binaryOp
+    | expr (PLUS | MINUS) expr                                              # binaryOp
+    | expr (LE | LT | EQUALS | GE | GT) expr                                # comparison
     | LPAREN expr RPAREN                                                    # paren
     | OBJECT_ID                                                             # id
     | INT                                                                   # int
