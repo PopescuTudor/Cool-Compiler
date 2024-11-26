@@ -9,6 +9,7 @@ public class New extends Expression {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + ": new : " + type);
+        System.out.println(" ".repeat(indentation) + "new");
+        System.out.println(" ".repeat(indentation + 2) + type);
     }
 }

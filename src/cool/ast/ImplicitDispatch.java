@@ -13,7 +13,8 @@ public class ImplicitDispatch extends Expression {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + ": implicit dispatch : " + methodName);
+        System.out.println(" ".repeat(indentation) + "implicit dispatch");
+        System.out.println(" ".repeat(indentation + 2) + methodName);
         for (Expression arg : args) {
             arg.print(indentation + 2);
         }

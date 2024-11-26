@@ -9,7 +9,7 @@ public class IsVoid extends Expression {
 
     @Override
     public void print(int indentation) {
-        System.out.println(" ".repeat(indentation) + ": isvoid :");
+        System.out.println(" ".repeat(indentation) + "isvoid");
         expr.print(indentation + 2);
     }
 }
