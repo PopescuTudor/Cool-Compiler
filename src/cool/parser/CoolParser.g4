@@ -8,7 +8,7 @@ options {
     package cool.parser;
 }
 
-program: (class SEMICOLON)+;
+program: (class SEMICOLON)+ EOF;
 
 class: CLASS TYPE_ID (INHERITS TYPE_ID)? LBRACE (feature SEMICOLON)* RBRACE;
 
@@ -25,8 +25,7 @@ expr
     | IF expr THEN expr ELSE expr FI                                        # if
     | WHILE expr LOOP expr POOL                                             # while
     | LBRACE (expr SEMICOLON)+ RBRACE                                       # block
-    | LET OBJECT_ID COLON TYPE_ID (ASSIGN expr)?
-      (COMMA OBJECT_ID COLON TYPE_ID (ASSIGN expr)?)* IN expr               # let
+    | LET let_decl (COMMA let_decl)* IN expr                                # let
     | CASE expr OF (OBJECT_ID COLON TYPE_ID DARROW expr SEMICOLON)+ ESAC    # case
     | NEW TYPE_ID                                                           # new
     | ISVOID expr                                                           # isvoid
@@ -35,10 +34,14 @@ expr
     | expr (LE | LT | EQUALS | GE | GT) expr                                # comparison
     | (NOT | TILDE) expr                                                    # unaryOp
     | LPAREN expr RPAREN                                                    # paren
+    | OBJECT_ID ASSIGN expr                                                 # assign
     | OBJECT_ID                                                             # id
     | INT                                                                   # int
     | STRING                                                                # string
     | TRUE                                                                  # bool
     | FALSE                                                                 # bool
-    | OBJECT_ID ASSIGN expr                                                 # assign
+    ;
+
+let_decl
+    : OBJECT_ID COLON TYPE_ID (ASSIGN expr)?                             # letDecl
     ;

@@ -80,15 +80,20 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitLet(CoolParser.LetContext ctx) {
-        List<LocalVarDef> localVarDefs = new ArrayList<>();
-        for (int i = 0; i < ctx.OBJECT_ID().size(); i++) {
-            String name = ctx.OBJECT_ID(i).getText();
-            String type = ctx.TYPE_ID(i).getText();
-            Expression init = ctx.expr(i) != null ? (Expression) visit(ctx.expr(i)) : null;
-            localVarDefs.add(new LocalVarDef(name, type, init));
+        List<LocalVarDef> declarations = new ArrayList<>();
+        for (CoolParser.Let_declContext declCtx : ctx.let_decl()) {
+            declarations.add((LocalVarDef) visit(declCtx));
         }
-        Expression body = (Expression) visit(ctx.expr(ctx.expr().size() - 1));
-        return new Let(localVarDefs, body);
+        Expression body = (Expression) visit(ctx.expr());
+        return new Let(declarations, body);
+    }
+
+    @Override
+    public ASTNode visitLetDecl(CoolParser.LetDeclContext ctx) {
+        String name = ctx.OBJECT_ID().getText();
+        String type = ctx.TYPE_ID().getText();
+        Expression init = ctx.expr() != null ? (Expression) visit(ctx.expr()) : null;
+        return new LocalVarDef(name, type, init);
     }
 
     @Override
