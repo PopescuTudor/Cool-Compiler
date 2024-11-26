@@ -30,6 +30,8 @@ expr
     | CASE expr OF (OBJECT_ID COLON TYPE_ID DARROW expr SEMICOLON)+ ESAC    # case
     | NEW TYPE_ID                                                           # new
     | ISVOID expr                                                           # isvoid
+    | expr (PLUS | MINUS | STAR | SLASH) expr                                 # binaryOp
+    | (NOT | TILDE) expr                                                # unaryOp
     | expr PLUS expr                                                        # plus
     | expr MINUS expr                                                       # minus
     | expr STAR expr                                                        # mult
@@ -43,7 +45,7 @@ expr
     | OBJECT_ID                                                             # id
     | INT                                                                   # int
     | STRING                                                                # string
-    | TRUE                                                                  # true
-    | FALSE                                                                 # false
+    | TRUE                                                                  # bool
+    | FALSE                                                                 # bool
     | OBJECT_ID ASSIGN expr                                                 # assign
     ;

@@ -1,5 +1,8 @@
 package cool.compiler;
 
+import cool.ast.ASTConstructorVisitor;
+import cool.ast.ASTNode;
+import cool.ast.Program;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
@@ -7,7 +10,6 @@ import cool.lexer.*;
 import cool.parser.*;
 
 import java.io.*;
-import java.util.List;
 
 
 public class Compiler {
@@ -47,17 +49,17 @@ public class Compiler {
                 
 
             // Test lexer only.
-            tokenStream.fill();
-            List<Token> tokens = tokenStream.getTokens();
-            tokens.stream().forEach(token -> {
-                var text = token.getText();
-                var name = CoolLexer.VOCABULARY.getSymbolicName(token.getType());
+//            tokenStream.fill();
+//            List<Token> tokens = tokenStream.getTokens();
+//            tokens.stream().forEach(token -> {
+//                var text = token.getText();
+//                var name = CoolLexer.VOCABULARY.getSymbolicName(token.getType());
+//
+//                System.out.println(text + " : " + name);
+//                //System.out.println(token);
+//            });
 
-                System.out.println(text + " : " + name);
-                //System.out.println(token);
-            });
 
-            /*
             // Parser
             if (parser == null)
                 parser = new CoolParser(tokenStream);
@@ -112,15 +114,24 @@ public class Compiler {
             }
             
             // Record any lexical or syntax errors.
-            lexicalSyntaxErrors |= errorListener.errors; */
+            lexicalSyntaxErrors |= errorListener.errors;
         }
-        /*
+
         // Stop before semantic analysis phase, in case errors occurred.
         if (lexicalSyntaxErrors) {
             System.err.println("Compilation halted");
             return;
-        } */
+        }
         
         // TODO Print tree
+
+        // Construct AST
+        ASTConstructorVisitor astConstructor = new ASTConstructorVisitor();
+        ASTNode ast = astConstructor.visit(globalTree);
+
+        // Print AST
+        if (ast instanceof Program) {
+            ((Program) ast).print(0);
+        }
     }
 }
