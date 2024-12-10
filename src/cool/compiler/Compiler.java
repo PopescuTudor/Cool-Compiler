@@ -3,14 +3,16 @@ package cool.compiler;
 import cool.ast.ASTConstructorVisitor;
 import cool.ast.ASTNode;
 import cool.ast.Program;
+import cool.structures.DefinitionPassVisitor;
+import cool.structures.ResolutionPassVisitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
 import cool.lexer.*;
 import cool.parser.*;
+import cool.structures.SymbolTable;
 
 import java.io.*;
-import java.util.List;
 
 
 public class Compiler {
@@ -22,20 +24,20 @@ public class Compiler {
             System.err.println("No file(s) given");
             return;
         }
-        
+
         CoolLexer lexer = null;
         CommonTokenStream tokenStream = null;
         CoolParser parser = null;
         ParserRuleContext globalTree = null;
-        
+
         // True if any lexical or syntax errors occur.
         boolean lexicalSyntaxErrors = false;
-        
+
         // Parse each input file and build one big parse tree out of
         // individual parse trees.
         for (var fileName : args) {
             var input = CharStreams.fromFileName(fileName);
-            
+
             // Lexer
             if (lexer == null)
                 lexer = new CoolLexer(input);
@@ -48,30 +50,30 @@ public class Compiler {
             else
                 tokenStream.setTokenSource(lexer);
                 
-
+            /*
             // Test lexer only.
-//            tokenStream.fill();
-//            List<Token> tokens = tokenStream.getTokens();
-//            tokens.stream().forEach(token -> {
-//                var text = token.getText();
-//                var name = CoolLexer.VOCABULARY.getSymbolicName(token.getType());
-//
-//                System.out.println(text + " : " + name);
-//                //System.out.println(token);
-//            });
-
+            tokenStream.fill();
+            List<Token> tokens = tokenStream.getTokens();
+            tokens.stream().forEach(token -> {
+                var text = token.getText();
+                var name = CoolLexer.VOCABULARY.getSymbolicName(token.getType());
+                
+                System.out.println(text + " : " + name);
+                //System.out.println(token);
+            });
+            */
 
             // Parser
             if (parser == null)
                 parser = new CoolParser(tokenStream);
             else
                 parser.setTokenStream(tokenStream);
-            
+
             // Customized error listener, for including file names in error
             // messages.
             var errorListener = new BaseErrorListener() {
                 public boolean errors = false;
-                
+
                 @Override
                 public void syntaxError(Recognizer<?, ?> recognizer,
                                         Object offendingSymbol,
@@ -79,22 +81,22 @@ public class Compiler {
                                         String msg,
                                         RecognitionException e) {
                     String newMsg = "\"" + new File(fileName).getName() + "\", line " +
-                                        line + ":" + (charPositionInLine + 1) + ", ";
-                    
-                    Token token = (Token)offendingSymbol;
+                            line + ":" + (charPositionInLine + 1) + ", ";
+
+                    Token token = (Token) offendingSymbol;
                     if (token.getType() == CoolLexer.ERROR)
                         newMsg += "Lexical error: " + token.getText();
                     else
                         newMsg += "Syntax error: " + msg;
-                    
+
                     System.err.println(newMsg);
                     errors = true;
                 }
             };
-            
+
             parser.removeErrorListeners();
             parser.addErrorListener(errorListener);
-            
+
             // Actual parsing
             var tree = parser.program();
             if (globalTree == null)
@@ -103,7 +105,7 @@ public class Compiler {
                 // Add the current parse tree's children to the global tree.
                 for (int i = 0; i < tree.getChildCount(); i++)
                     globalTree.addAnyChild(tree.getChild(i));
-                    
+
             // Annotate class nodes with file names, to be used later
             // in semantic error messages.
             for (int i = 0; i < tree.getChildCount(); i++) {
@@ -113,7 +115,7 @@ public class Compiler {
                 if (child instanceof ParserRuleContext)
                     fileNames.put(child, fileName);
             }
-            
+
             // Record any lexical or syntax errors.
             lexicalSyntaxErrors |= errorListener.errors;
         }
@@ -123,16 +125,34 @@ public class Compiler {
             System.err.println("Compilation halted");
             return;
         }
-        
-        // TODO Print tree
+
+        // Populate global scope.
+        SymbolTable.defineBasicClasses();
+
+        // TODO Semantic analysis
 
         // Construct AST
         ASTConstructorVisitor astConstructor = new ASTConstructorVisitor();
         ASTNode ast = astConstructor.visit(globalTree);
 
-        // Print AST
-        if (ast instanceof Program) {
-            ((Program) ast).print(0);
+        // semantic analysis
+
+
+        var definitionPassVisitor = new DefinitionPassVisitor();
+        ast.accept(definitionPassVisitor);
+
+//        var resolutionPassVisitor = new ResolutionPassVisitor(definitionPassVisitor.getGlobalScope());
+//        ast.accept(resolutionPassVisitor);
+
+        if (SymbolTable.hasSemanticErrors()) {
+            System.err.println("Compilation halted");
+            return;
         }
+
+
+//        if (SymbolTable.hasSemanticErrors()) {
+//            System.err.println("Compilation halted");
+//            return;
+//        }
     }
 }

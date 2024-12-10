@@ -1,13 +1,14 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class Formal extends ASTNode {
     private String name;
     private String type;
 
-    public Formal(Token token, String name, String type) {
-        super(token);
+    public Formal(ParserRuleContext ctx, Token token, String name, String type) {
+        super(token, ctx);
         this.name = name;
         this.type = type;
     }
@@ -25,5 +26,9 @@ public class Formal extends ASTNode {
 
     public String getType() {
         return token.getText();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

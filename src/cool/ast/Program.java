@@ -1,14 +1,15 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;
 
 public class Program extends ASTNode {
-    private List<ClassNode> classes;
+    public List<ClassNode> classes;
 
-    public Program(Token token, List<ClassNode> classes) {
-        super(token);
+    public Program(ParserRuleContext ctx, Token token, List<ClassNode> classes) {
+        super(token, ctx);
         this.classes = classes;
     }
 
@@ -26,5 +27,9 @@ public class Program extends ASTNode {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

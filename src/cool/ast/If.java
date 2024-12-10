@@ -1,5 +1,7 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class If extends Expression {
@@ -7,8 +9,8 @@ public class If extends Expression {
     private Expression thenBranch;
     private Expression elseBranch;
 
-    public If(Token token, Expression condition, Expression thenBranch, Expression elseBranch) {
-        super(token);
+    public If(ParserRuleContext ctx, Token token, Expression condition, Expression thenBranch, Expression elseBranch) {
+        super(token, ctx);
         this.condition = condition;
         this.thenBranch = thenBranch;
         this.elseBranch = elseBranch;
@@ -28,5 +30,9 @@ public class If extends Expression {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

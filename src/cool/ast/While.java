@@ -1,13 +1,14 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class While extends Expression {
     private Expression condition;
     private Expression body;
 
-    public While(Token token, Expression condition, Expression body) {
-        super(token);
+    public While(ParserRuleContext ctx, Token token, Expression condition, Expression body) {
+        super(token, ctx);
         this.condition = condition;
         this.body = body;
     }
@@ -25,5 +26,9 @@ public class While extends Expression {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

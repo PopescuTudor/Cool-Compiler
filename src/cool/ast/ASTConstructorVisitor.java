@@ -15,7 +15,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         for (CoolParser.ClassContext classCtx : ctx.class_()) {
             classes.add((ClassNode) visit(classCtx));
         }
-        return new Program(ctx.start, classes);
+        return new Program(ctx, ctx.start, classes);
     }
 
     @Override
@@ -26,7 +26,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         for (CoolParser.FeatureContext featureCtx : ctx.feature()) {
             features.add((Feature) visit(featureCtx));
         }
-        return new ClassNode(ctx.start, name, parent, features);
+        return new ClassNode(ctx, ctx.start, name, parent, features);
     }
 
     @Override
@@ -34,7 +34,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         String name = ctx.OBJECT_ID().getText();
         String type = ctx.TYPE_ID().getText();
         Expression init = ctx.expr() != null ? (Expression) visit(ctx.expr()) : null;
-        return new Attribute(ctx.start, name, type, init);
+        return new Attribute(ctx, ctx.start, name, type, init);
     }
 
     @Override
@@ -46,14 +46,14 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         }
         String returnType = ctx.TYPE_ID().getText();
         Expression body = (Expression) visit(ctx.expr());
-        return new Method(ctx.start, name, formals, returnType, body);
+        return new Method(ctx, ctx.start, name, formals, returnType, body);
     }
 
     @Override
     public ASTNode visitFormal(CoolParser.FormalContext ctx) {
         String name = ctx.OBJECT_ID().getText();
         String type = ctx.TYPE_ID().getText();
-        return new Formal(ctx.start, name, type);
+        return new Formal(ctx, ctx.start, name, type);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         Expression condition = (Expression) visit(ctx.expr(0));
         Expression thenBranch = (Expression) visit(ctx.expr(1));
         Expression elseBranch = (Expression) visit(ctx.expr(2));
-        return new If(ctx.start, condition, thenBranch, elseBranch);
+        return new If(ctx, ctx.start, condition, thenBranch, elseBranch);
     }
 
     @Override
@@ -69,14 +69,14 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         Expression left = (Expression) visit(ctx.expr(0));
         Expression right = (Expression) visit(ctx.expr(1));
         String op = ctx.getChild(1).getText();
-        return new BinaryOp(ctx.start, op, left, right);
+        return new BinaryOp(ctx, ctx.start, op, left, right);
     }
 
     @Override
     public ASTNode visitWhile(CoolParser.WhileContext ctx) {
         Expression condition = (Expression) visit(ctx.expr(0));
         Expression body = (Expression) visit(ctx.expr(1));
-        return new While(ctx.start, condition, body);
+        return new While(ctx, ctx.start, condition, body);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
             declarations.add((LocalVarDef) visit(declCtx));
         }
         Expression body = (Expression) visit(ctx.expr());
-        return new Let(ctx.start, declarations, body);
+        return new Let(ctx, ctx.start, declarations, body);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         String name = ctx.OBJECT_ID().getText();
         String type = ctx.TYPE_ID().getText();
         Expression init = ctx.expr() != null ? (Expression) visit(ctx.expr()) : null;
-        return new LocalVarDef(ctx.start, name, type, init);
+        return new LocalVarDef(ctx, ctx.start, name, type, init);
     }
 
     @Override
@@ -105,9 +105,9 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
             String name = ctx.OBJECT_ID(i).getText();
             String type = ctx.TYPE_ID(i).getText();
             Expression branchExpr = (Expression) visit(ctx.expr(i + 1));
-            branches.add(new CaseBranch(ctx.start, name, type, branchExpr));
+            branches.add(new CaseBranch(ctx, ctx.start, name, type, branchExpr));
         }
-        return new Case(ctx.start, expr, branches);
+        return new Case(ctx, ctx.start, expr, branches);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         for (CoolParser.ExprContext exprCtx : ctx.expr()) {
             expressions.add((Expression) visit(exprCtx));
         }
-        return new Block(ctx.start, expressions);
+        return new Block(ctx, ctx.start, expressions);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         for (int i = 1; i < ctx.expr().size(); i++) {
             args.add((Expression) visit(ctx.expr(i)));
         }
-        return new Dispatch(ctx.start, obj, ctx.TYPE_ID() != null ? ctx.TYPE_ID().getText() : null, methodName, args);
+        return new Dispatch(ctx, ctx.start, obj, ctx.TYPE_ID() != null ? ctx.TYPE_ID().getText() : null, methodName, args);
     }
 
     @Override
@@ -137,17 +137,17 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         for (CoolParser.ExprContext exprCtx : ctx.expr()) {
             args.add((Expression) visit(exprCtx));
         }
-        return new ImplicitDispatch(ctx.start, methodName, args);
+        return new ImplicitDispatch(ctx, ctx.start, methodName, args);
     }
 
     @Override
     public ASTNode visitNew(CoolParser.NewContext ctx) {
-        return new New(ctx.start, ctx.TYPE_ID().getText());
+        return new New(ctx, ctx.start, ctx.TYPE_ID().getText());
     }
 
     @Override
     public ASTNode visitIsvoid(CoolParser.IsvoidContext ctx) {
-        return new IsVoid(ctx.start, (Expression) visit(ctx.expr()));
+        return new IsVoid(ctx, ctx.start, (Expression) visit(ctx.expr()));
     }
 
     @Override
@@ -155,14 +155,14 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         Expression left = (Expression) visit(ctx.expr(0));
         Expression right = (Expression) visit(ctx.expr(1));
         String op = ctx.getChild(1).getText();
-        return new BinaryOp(ctx.start, op, left, right);
+        return new BinaryOp(ctx, ctx.start, op, left, right);
     }
 
     @Override
     public ASTNode visitUnaryOp(CoolParser.UnaryOpContext ctx) {
         Expression expr = (Expression) visit(ctx.expr());
         String op = ctx.getChild(0).getText();
-        return new UnaryOp(ctx.start, op, expr);
+        return new UnaryOp(ctx, ctx.start, op, expr);
     }
 
     @Override
@@ -172,28 +172,28 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitId(CoolParser.IdContext ctx) {
-        return new Id(ctx.start, ctx.OBJECT_ID().getText());
+        return new Id(ctx, ctx.start, ctx.OBJECT_ID().getText());
     }
 
     @Override
     public ASTNode visitInt(CoolParser.IntContext ctx) {
-        return new IntConstant(ctx.start, Integer.parseInt(ctx.INT().getText()));
+        return new IntConstant(ctx, ctx.start, Integer.parseInt(ctx.INT().getText()));
     }
 
     @Override
     public ASTNode visitString(CoolParser.StringContext ctx) {
-        return new StringConstant(ctx.start, ctx.STRING().getText());
+        return new StringConstant(ctx, ctx.start, ctx.STRING().getText());
     }
 
     @Override
     public ASTNode visitBool(CoolParser.BoolContext ctx) {
-        return new BoolConstant(ctx.start, Boolean.parseBoolean(ctx.getText()));
+        return new BoolConstant(ctx, ctx.start, Boolean.parseBoolean(ctx.getText()));
     }
 
     @Override
     public ASTNode visitAssign(CoolParser.AssignContext ctx) {
         String id = ctx.OBJECT_ID().getText();
         Expression expr = (Expression) visit(ctx.expr());
-        return new Assign(ctx.start, id, expr);
+        return new Assign(ctx, ctx.start, id, expr);
     }
 }

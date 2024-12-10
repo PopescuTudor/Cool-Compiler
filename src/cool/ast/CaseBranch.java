@@ -1,5 +1,6 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class CaseBranch extends ASTNode {
@@ -7,8 +8,8 @@ public class CaseBranch extends ASTNode {
     private String type;
     private Expression body;
 
-    public CaseBranch(Token token, String name, String type, Expression body) {
-        super(token);
+    public CaseBranch(ParserRuleContext ctx, Token token, String name, String type, Expression body) {
+        super(token, ctx);
         this.name = name;
         this.type = type;
         this.body = body;
@@ -28,5 +29,9 @@ public class CaseBranch extends ASTNode {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

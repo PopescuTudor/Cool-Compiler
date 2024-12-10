@@ -1,302 +1,247 @@
-# Tema 1 - Analiză lexicală și sintactică
+# Tema 2 - Analiză semantică
 
 ## Obiective
 
 Obiectivele temei sunt următoarele:
 
-- Implementarea **specificațiilor lexicală și sintactică** ale  limbajului Cool.
+- **Rezolvarea simbolurilor** din programele Cool, utilizând tabele de simboluri.
 
-- Utilizarea instrumentului **ANTLR**.
-
-- Întrebuințarea mecanismelor de **parcurgere** a arborilor de  derivare (*listeners*/*visitors*).
-
-- Construcția și parcurgerea **arborilor de sintaxă abstractă (AST)**.
+- **Verificarea tipurilor** definițiilor și expresiilor din programele Cool, prin implementarea regulilor de tipare din manualul limbajului.
 
 ## Descriere
 
-Tema abordează primele două etape ale construcției compilatorului pentru limbajul Cool, analiza lexicală și cea sintactică.
-Reprezentarea intermediară generată în aceste etape, în forma unui **AST**, va constitui punctul de plecare pentru rezolvarea următoarelor două teme, de analiză semantică, respectiv de generare de cod.
+Tema abordează cea de-a treia etapă a construcției compilatorului pentru limbajul Cool, analiza semantică.
+Aceasta pornește de la reprezentarea intermediară generată în etapa anterioară, de analiză sintactică, în forma unui arbore de sintaxă abstractă (AST).
+Rezultatul acestei etape îl constituie o formă **adnotată** a reprezentării intermediare menționate mai sus, ce include informații despre **simbolurile** și **tipurile** din program.
 
-În vederea testării, tema curentă va primi ca parametri în linia de comandă numele unuia sau mai multor fișiere conținând programe Cool, și va tipări la *standard output* **reprezentarea ierarhică** a  programului, în formatul precizat în secțiunea [Analiză sintactică](#analiza-lexicală), iar la *standard error*, eventualele **erori** apărute.
-În cadrul temei, veți genera **exclusiv erori lexicale**, în maniera precizată în secțiunea [Erori lexicale](#erori-lexicale).
-Erorile sintactice vor fi cele generate automat de ANTLR.
+Tema de față va primi ca parametri în linia de comandă numele unuia sau mai multor fișiere conținând programe Cool, și va tipări la *standard error* eventualele **erori semantice** apărute, sau nimic dacă programul este corect semantic.
+Programele de test vor fi **corecte lexical și sintactic**!
 
-Pentru exemplificarea funcționalității, pornim de la cele două programe Cool de mai jos:
+Mai jos, funcționalitatea este exemplificată pornind de la un program Cool simplu:
 
-```java
--- p1.cl
-class A {};
-
+```ts
+ -  prog.cl
+class A inherits B {};
 class B inherits A {};
-
--- p2.cl
-class A {
-    x : Int; #
-};
 ```
 
-Pentru acestea, obținem următoarele rezultate:
+Pentru acesta, obținem următorul rezultat:
 
 ```console
-> java cool.compiler.Compiler p1.cl
-program
-    class
-    A
-    class
-    B
-    A
-
-> java cool.compiler.Compiler p2.cl
-"p2.cl", line 2:13, Lexical error: Invalid character: #
+$ java cool.compiler.Compiler prog.cl
+"prog.cl", line 1:7, Semantic error: Inheritance cycle for class A
+"prog.cl", line 2:7, Semantic error: Inheritance cycle for class B
 Compilation halted
 ```
 
-**Scheletul de pornire** al temei gestionează următoarele aspecte:
-
-- **Multiple** fișiere de intrare denumite în linia de comandă.
-
-- Rularea **analizoarelor** lexical și sintactic definite de voi pe fiecare dintre fișierele de mai sus.
-
-- Construcția unui **arbore global de derivare**, care agregă arborii de derivare individuali din toate fișierele prelucrate.
-
-- Afișarea sugestivă a **erorilor**, cu informații despre fișierul în care a apărut eroarea, linia și coloana, tipul erorii (lexicală sau sintactică) și mesajul propriu-zis.
+**Scheletul de pornire** al temei expune o funcție care asigură **afișarea** erorilor în formatul ilustrat mai sus.
 
 ## Cerințe
 
+Pentru început, definiți **clasele și metodele de bază** în domeniul global de vizibilitate, utilizând metoda `SymbolTable.defineBasicClasses()` din pachetul `cool.structures` (vezi secțiunea [Schelet](#structura-scheletului)).
+Numele parametrilor formali ai metodelor de bază sunt cele din manualul limbajului Cool.
 
-În continuare, sunt detaliate cerințele aferente celor două etape, de analiză lexicală, respectiv sintactică.
+Așa cum a fost menționat în secțiunea [Descriere](#descriere), funcționalitatea de bază a temei constă în afișarea **erorilor semantice**, în cazul în care acestea există.
+În continuare, sunt descrise toate mesajele de eroare pe care este necesar să le generați, grupate pe construcții de limbaj.
+Utilizați în acest scop metoda `SymbolTable.error()` (vezi secțiunea [Schelet](#structura-scheletului)).
+Pentru situații concrete, consultați testele (vezi secțiunea [Testare](#testare)).
 
-### Analiza lexicală
+### Definiții de clase
 
-Redactați în ANTLR specificația lexicală a limbajului Cool, pornind de la secțiunile 10 și 11 ale manualului acestuia.
+- `Class has illegal name SELF_TYPE`, dacă este definită o clasă cu numele `SELF_TYPE`.
 
-Mai jos, sunt precizate anumite transformări ce vor fi aplicate asupra literalilor șir de caractere, precum și erorile lexicale ce trebuie generate.
+- `Class <C> is redefined`, în cazul în care clasa este deja definită.
+Aici sunt incluse și cazurile de redefinire a claselor de bază, e.g. `Int`.
 
-### Șiruri de caractere
+- `Class <C> has illegal parent <P>`, dacă părintele este `Int`, `String`, `Bool` sau `SELF_TYPE`.
 
-În vederea obținerii reprezentării interne a literalilor șir de caractere întâlnite în programele Cool, se vor aplica transformările de mai jos.
-Puteți utiliza metoda `setText(String)` a clasei `Lexer` pentru a modifica dinamic lexemul aferent tokenului aflat în construcție.
-Ea poate fi invocată într-un bloc `{}`.
+- `Class <C> has undefined parent <P>`, dacă părintele nu este definit.
 
-- Cele două caractere **ghilimele** de la începutul, respectiv sfârșitul unui literal, sunt eliminate din reprezentarea internă a acestuia.
+- `Inheritance cycle for class <C>`, în prezența unui ciclu de moștenire, de orice lungime.
 
-- Secvența de **două caractere** `"\n"` (`\` și `n`) din cadrul unui literal, este reprezentată intern în forma unicului caracter `\n` (linie nouă).
-    Similar pentru secvențele `"\t"`, `"\b"` și `"\f"` (vezi secțiunea 10.2 a manualului).
+### Definiții de atribute
 
-- Orice altă secvență `"\c"`, este interpretată drept caracterul `c`.
+- `Class <C> has attribute with illegal name self`, întrucât atributele nu pot fi denumite `self`.
 
-De exemplu, literalul `"12\n\a34"`, având lungime 10 (ghilimelele și caracterele *backslash* fac parte din lexem) va fi transformat în reprezentarea `\n`, având lungime 6, în urma eliminării ghilimelelor, a înlocuirii secvenței `"\n"` cu caracterul de linie nouă, subliniat, și a înlocuirii secvenței `"\a"` cu caracterul `a`.
+- `Class <C> redefines attribute <a>`, dacă atributul este deja definit în aceeași clasă.
 
-### Erori lexicale
+- `Class <C> redefines inherited attribute <a>`, dacă atributul este deja definit într-o clasă strămoș.
 
-Abordarea consacrată a erorilor lexicale este de a nu le genera direct din analizorul lexical, ci de a construi un *token* având o **categorie lexicală dedicată**, `ERROR`, și de a include în lexem mesajul de eroare.
-Ulterior, analizorul sintactic va decide ce este de făcut cu acest *token*, eventual afișând mesajul de eroare aferent.
+- `Class <C> has attribute <a> with undefined type <T>`, dacă tipul atributului nu este definit.
 
-Puteți utiliza metoda `raiseError(String)`, definită în schelet în cadrul analizorului lexical, în secțiunea `\@members`, care primește drept parametru mesajul de eroare, și care poate fi invocată într-un bloc `{}`.
-Aceasta fixează categoria lexicală a *tokenului* aflat în construcție la `ERROR` și lexemul, la mesajul de eroare.
+- `Type <T1> of initialization expression of attribute <a> is` `incompatible with declared type <T2>`, dacă expresia de inițializare a atributului nu are un tip corect.
 
-Erorile lexicale ce trebuie semnalate sunt următoarele:
+### Definiții de metode
 
-- `String constant too long`, în cazul în care un literal șir de caractere, în urma transformărilor menționate în secțiunea [Șiruri de caractere](#șiruri-de-caractere) conține mai mult de 1024 de caractere.
+- `Class <C> redefines method <m>`, dacă metoda este deja definită în aceeași clasă.
+Cool **nu** permite supraîncărcarea metodelor cu tipuri diferite de parametri.
 
-- `String contains null character`, în cazul în care literalul conține caracterul terminator de șir, `\0` (ASCII 0).
-    Atenție, nu este vorba de secvența de două caractere `"\0"`, transformată în     caracterul `0`, conform regulilor de mai sus.
-    În ANTLR, vă puteți referi la caracterul terminator prin `\u0000`.
+- `Class <C> has method <m> with undefined return type <T>`, dacă tipul întors nu este definit.
+De remarcat că numele `self` este permis pentru metode, datorită spațiilor de nume **diferite** utilizate de atribute și metode.
 
-- `Unterminated string constant`, dacă literalul conține caracterul `\n` (linie nouă) *non-escaped* (vezi secțiunea 10.2 din manual).
-    Analiza lexicală continuă **după** caracterul de linie nouă.
+- `Class <C> overrides method <m> with different number of` `formal parameters`, dacă metoda este supradefinită cu alt număr de parametri.
 
-- `EOF in string constant`, în cazul în care sfârșitul de fișier survine în interiorul unui literal.
+- `Class <C> overrides method <m> but changes type of formal` `parameter <f> from <T1> to <T2>`, dacă metoda este supradefinită cu schimbarea tipului unui parametru.
+Numele `<f>` este aferent variantei supradefinite.
+Spre exemplu, dacă definiția originală este `f(x : Int)`, iar varianta supradefinită este `f(y : Bool)`, mesajul de eroare va reflecta numele `y`.
 
-- `Unmatched *)`, dacă marcajul de sfârșit de comentariu multilinie apare în exteriorul unui bloc de comentariu.
+- `Class <C> overrides method <m> but changes return type from` `<T1> to <T2>`, dacă metoda este supradefinită cu alt tip întors.
 
-- `EOF in comment`, în cazul în care sfârșitul de fișier survine în interiorul unui comentariu multilinie.
+- `Type <T1> of the body of method <m> is incompatible with` `declared return type <T2>`, în cazul în care corpul metodei nu are un tip corect.
 
-- `Invalid character: c`, dacă este întâlnit un caracter nepermis, `c`.
-    Mesajul de eroare va conține explicit caracterul problematic.
+### Definiții de parametri formali
 
-Pentru depistarea cazurilor de mai sus, se recomandă definirea de **reguli și alternative dedicate** acestora.
-Informația de linie și coloană corespunde începutului de literal, comentariu sau caracter problematic - comportamentul implicit al ANTLR la construirea unui *token*.
+- `Method <m> of class <C> has formal parameter with illegal` `name self`, întrucât parametrii formali nu pot fi denumiți `self`.
 
-**ATENȚIE!** Analizorul lexical va fi scris în așa fel încât toate cazurile de eroare să fie tratate prin intermediul unui *token* `ERROR`.
-Indiferent de corectitudinea programului de intrare, ANTLR trebuie să **NU** genereze eroare!
+- `Method <m> of class <C> redefines formal parameter <f>`, dacă parametrul este deja definit în cadrul aceleiași metode.
 
-### Analiza sintactică
+- `Method <m> of class <C> has formal parameter <f> with` `illegal type SELF_TYPE`, întrucât parametrii formali nu pot avea acest tip.
 
-Redactați în ANTLR specificația sintactică a limbajului Cool, pornind de la secțiunea 11 din manualului acestuia. **NU** veți genera explicit erori sintactice!
+- `Method <m> of class <C> has formal parameter <f> with` `undefined type <T>`, dacă tipul parametrului nu este definit.
 
-Pasul următor constă în parcurgerea arborelui de derivare generat de ANTLR și construirea **AST**.
-Acesta va fi la rândul său vizitat în vederea afișării sale.
-Unul dintre avantajele utilizării unui **AST** este posibilitatea **decuplării** reprezentării interne a programului de cea furnizată de arborele de derivare, puternic dependent de gramatica utilizată.
-Spre exemplu, deși sintaxa limbajului Cool permite atât *dispatch*-uri explicite (e.g. `obj.f()` sau `self.f()`), cât și implicite (e.g. `f()`), ambele ar putea fi reprezentate de **același** tip de nod AST, adăugând manual în cazul celor implicite un nod **imaginar** reprezentând obiectul `self`.
+### Construcția `let`
 
-În continuare, este descrisă **formatarea** reprezentării ierarhice a unui program Cool analizat, în funcție de fiecare construcție de limbaj.
-Forma este a unui arbore, în care copiii unui nod au o indentare cu **două spații** mai mare decât cea a părintelui (vezi exemplul de afișare din secțiunea  [Descriere](#descriere)).
-Parcurgeți **fișierele de test** pentru exemple concrete (vezi secțiunea [Testare](#testare)).
-Pentru concizie, vom folosi **notația**: `<copil 1> ... <copil n>`.
-Ordinea copiilor este cea din specificația sintactică a limbajului (secțiunea 11 din manual), dar anumiți copii irelevanți lipsesc (de exemplu, parantezele și acoladele).
+- `Let variable has illegal name self`, întrucât variabilele locale nu pot fi denumite `self`.
 
-#### Program
+- `Let variable <l> has undefined type <T>`, dacă tipul variabilei nu este definit.
 
-```text
-:   program : <clasă 1> ... <clasă n>
-```
+- `Type <T1> of initialization expression of identifier <i> is` `incompatible with declared type <T2>`, dacă expresia de inițializare nu are un tip corect.
 
-#### Clasă
+### Construcția `case`
 
-```text
-:   class : <nume> <clasă părinte>? <atribut/metodă 1> ...\
-    <atribut/metodă n>
-```
+- `Case variable has illegal name self`, întrucât variabilele locale nu pot fi denumite `self`.
 
-#### Atribut
+- `Case variable <c> has illegal type SELF_TYPE`, întrucât este necesară precizarea unui tip concret.
 
-```text
-:   attribute : <nume> <tip> <inițializare>?
-```
+- `Case variable <c> has undefined type <T>`, dacă tipul variabilei nu este definit.
 
-#### Metodă
+### Utilizări de variabile
 
-```text
-:   method : <nume> <formal 1>? ... <formal n>? <tip> <corp>
-```
+- `Undefined identifier <i>`, dacă nu este accesibilă nicio definiție a variabilei în domeniul curent de vizibilitate.
 
-#### Variabilă
+### Operatori aritmetici, relaționali și booleeni
 
-```text
-:   <nume>
-```
+- `Operand of <op> has type <T> instead of Int`, unde operatorul poate fi oricare dintre `+`, `-`, `*`, `/`, `~`, `<`, `<=`, dacă operandul are un alt tip decât `Int`.
 
-#### Literal
+- `Cannot compare <T1> with <T2>`, în cazul operatorului `=`, dacă cel puțin unul dintre cele două tipuri este `Int`, `String` sau `Bool`, iar celălalt este un alt tip (vezi manualul Cool).
 
-```text
-:   <literal>
-```
+- `Operand of not has type <T> instead of Bool`, dacă `not` este aplicat pe un operand cu un tip diferit de `Bool`.
 
-#### Operator binar
+### Atribuiri
 
-```text
-:   <operator> : <operand 1> <operand 2>
-```
+- `Cannot assign to self`, deoarece nu se pot realiza atribuiri către `self`.
 
-#### Operator unar
+- `Type <T1> of assigned expression is incompatible with` `declared type <T2> of identifier <i>`, în cazul în care expresia cu care se realizează atribuirea nu are un tip corect.
 
-```text
-:   <operator> : <operand>
-```
+### `new` și `isvoid`
 
-#### Atribuire
+- `new is used with undefined type <T>`, dacă tipul nu este definit.
 
-```text
-:   <- : <variabilă> <expresie>
-```
+- Nu există erori aferente lui `isvoid`, care întoarce întotdeauna `Bool`.
 
-#### *Dispatch* explicit pe un obiect
+### `while` și `if`
 
-```text
-:   . : <obiect> <clasă static dispatch>? <metodă> <parametru1>? ... <parametru n>?
-```
+- `While condition has type <T> instead of Bool`, în cazul în care condiția nu are tipul corect.
 
-#### *Dispatch* fără obiect explicit
+- `If condition has type <T> instead of Bool`, în cazul în care condiția nu are tipul corect.
 
-```text
-:   implicit dispatch : <metodă> <parametru 1>? ... <parametru n>?
-```
+### Apeluri de metode
 
-#### Decizie
+- `Undefined method <m> in class <C>`, dacă metoda nu este definită.
+Pentru apeluri **dinamice**, de forma `e.f(e’)`, metoda este căutată în clasa reprezentând tipul lui `e`. Pentru apeluri **statice**, de forma `e@C.f(e’)`, metoda este căutată în clasa `C`.
 
-```text
-:   if : <condiție> <ramură then> <ramură else>
-```
+- `Method <m> of class <C> is applied to wrong number of` `arguments`, dacă numărul parametrilor actuali nu corespunde.
 
-#### Buclă
+- `In call to method <m> of class <C>, actual type <T1> of` `formal parameter <f> is incompatible with declared type` `<T2>`, dacă unul dintre parametrii actuali nu are un tip corect.
 
-```text
-:   while : <condiție> <corp>
-```
+- `Type of static dispatch cannot be SELF_TYPE`, în cazul expresiei `e@SELF_TYPE.f(e’)`.
 
-#### Construcție let
+- `Type <T> of static dispatch is undefined`, dacă se realizează un apel static de metodă pe baza unui tip nedefinit.
 
-```text
-:   let : <locală 1> ... <locală n> <corp>
-```
+- `Type <T1> of static dispatch is not a superclass of type` `<T2>`, dacă, în expresia `e@T.f(e’)`, `T` nu este o superclasă a tipului lui `e`.
 
-#### Definiție de variabilă locală
+### Metoda `main`
 
-```text
-:   local : <nume> <tip> <inițializare>?
-```
-
-#### Construcție case
-
-```text
-:   case : <expresie> <ramură 1> ... <ramură n>
-```
-
-#### Ramură case
-
-```text
-:   case branch : <nume> <tip> <corp>
-```
-
-#### Bloc
-
-```text
-:   block : <expresie 1> ... <expresie n>
-```
+- `No method main in class Main`, întrucât toate programele Cool impun existența unei clase `Main`, cu o metodă `main` (vezi manualul Cool).
 
 ## Testare
 
-Odată ce ați finalizat etapa de **analiză lexicală**, o puteți testa independent decomentând porțiunea din metoda [`cool.compiler.Compiler.main()`](src/cool/compiler/Compiler.java), care începe cu comentariul `// Test lexer only`.
-Aceasta afișează, pentru fiecare *token* recunoscut, lexemul și categoria asociate.
+Testele pot fi rulate executând metoda `cool.tester.Tester2.main` din folderul `checker/`, care afișează statistici despre fiecare test în parte, incluzând erori nesemnalate sau semnalate în plus, precum și scorul obținut, din 100 de puncte.
 
-După implementarea etapei de **analiză sintactică**, puteți rula testele executând metoda [`cool.tester.Tester1.main()`](checker/cool/tester/Tester1.java), care afișează statistici despre fiecare test în parte, precum și scorul obținut, din 100 de puncte.
-
-**Testele** se află în directorul `checker/tests/` din rădăcina proiectului.
+**Testele** se află în directorul `checker/tests` din rădăcina proiectului.
 Fișierele `.cl` conțin programe Cool de analizat, iar cele `.ref`, ieșirea de referință a temei.
 Pentru fiecare test, sistemul de testare redirectează intrarea și eroarea standard ale compilatorului către un fișier `.out`, pe care îl compară apoi cu cel de referință.
+Pentru a evita eroarea indusă de absența unei clase `Main` cu o metodă `main`, dar în același timp pentru a evita definirea acestei clase în fiecare fișier test, modulul de testare încarcă fișierul **`main.cl`** împreună cu fișierul curent de test.
 
-Având în vedere că testele verifică **incremental** funcționalitatea analizorului sintactic, le puteți folosi pentru a vă ghida **dezvoltarea** temei!
+Având în vedere că testele verifică **incremental** funcționalitatea analizorului semantic, le puteți folosi pentru a vă ghida **dezvoltarea** temei!
+Ele sunt structurate după cum urmează:
+
+- Testele 1 - 17 **nu** necesită implementarea `SELF_TYPE` și a     regulilor de tipare specifice. Acestea sunt utilizate propriu-zis doar în testele 18 - 20.
+Există mențiuni la `SELF_TYPE` și în primele 17 teste, dar **doar în poziții eronate**, pe care trebuie să le respingeți, e.g. definiție de clasă cu numele `SELF_TYPE`!
+
+- Testele 1 - 5 abordează **definirea** corectă a entităților, presupunând rezolvarea referințelor la tipuri, dar **nu** și verificarea tipurilor pe baza regulilor de tipare.
+
+- Testul 6 abordează rezolvarea **referințelor la variabile**, dar **nu** și la metode.
+
+- Testele 7 - 17 abordează rezolvarea referințelor la variabile și **verificarea tipurilor** pentru de limbaj, **cu excepția** apelurilor de metodă.
+
+- Testele 18 și 19 abordează rezolvarea **referințelor la metode** și verificarea tipurilor în cazul **apelurilor de metodă**, introducând și **`SELF_TYPE`**.
+
+- Testul 20 abordează **metodele de bază**, e.g. `abort()`.
 
 ## Structura scheletului
 
-În vederea unei mai bune structurări a implementării, **sursele** sunt distribuite în mai multe pachete, după cum urmeză:
+În vederea unei mai bune structurări a implementării, **sursele** sunt distribuite în mai multe pachete, toate în directorul `src/`, după cum urmeză:
 
-- `cool.compiler`: Modulul principal al aplicației
+- `cool.compiler` : Modulul principal al aplicației
 
 - `cool.lexer`: Analizorul lexical
 
 - `cool.parser`: Analizorul sintactic
 
-- `cool.tester`: Modulul de testare
+- `cool.structures`: Găsiți aici metoda de **inițializare** a claselor și metodelor de bază, `SymbolTable.defineBasicClasses()`, precum și metoda de semnalare a **erorilor** semantice, `SymbolTable.error()`.
+Tot aici vă puteți defini și clasele pentru **simboluri**.
 
 În plus, **testele** se găsesc în directorul `checker/tests` din rădăcina proiectului.
 
 ## Precizări
 
-Respectarea următoarelor precizări este necesară pentru buna funcționare a temei și a modulului de testare.
+- Având în vedere posibilitatea existenței de **utilizări anticipate**
+    (*forward references*) pentru clase, atribute și metode, sunt
+    necesare **multiple treceri** peste arborele sintactic.
 
-- Verificați că *jar*-ul de ANTLR de pe mașina voastră este accesibil în cadrul proiectului.
+- Pentru simplitate, testele presupun că, într-o primă etapă, este
+    asigurată **corectitudinea ierarhiei de clase**, la nivelul
+    definirii numelor și părinților claselor (vezi testul 1). Dacă apar
+    erori la acest nivel, e.g. cicluri de moștenire, analiza semantică
+    este **abandonată**, fără a trece mai departe la validarea
+    definițiilor de atribute, metode etc.
 
-- Asigurați-vă că plugin-ul de ANTLR generează codul Java în directorul `src/`, și nu în `target/` sau `gen/`.
-    Pentru aceasta, consultați ghidul de configurare din Laboratorul 0.
-    De asemenea, bifați ambele opțiuni de generare pentru *listeners* și *visitors*.
+- Rezolvarea simbolurilor și verificarea tipurilor **se împletesc**
+    într-o manieră naturală. Spre exemplu, rezolvarea simbolului `x`
+    este necesară pentru stabilirea tipului acestuia în expresia
+    `x + 1`, în timp ce determinarea tipului subexpresiei `e` din
+    expresia `e.f(x)` este necesară pentru rezolvarea simbolului `f`.
 
-- Pentru gestiunea **terminatorului de linie** (`\n` sau `\r\n`) în     specificația lexicală, se recomandă o abordare modulară, prin     definirea unei reguli de tip fragment, care să surprindă diversele     forme pe care terminatorul le poate lua, și utilizarea acesteia în celelalte reguli.
+- Pentru **rezolvarea simbolurilor** în raport cu domeniile de
+    vizibilitate corecte, puteți utiliza oricare dintre cele două
+    variante discutate pe slide-urile 194 - 195 din curs.
 
-- În cadrul specificației lexicale, acțiunea `-> skip` se aplică pe     o întreagă regulă, indiferent de numărul alternativelor.
-    Dacă doriți să **reduceți** efectul acțiunii la o singură alternativă a regulii, apelați-o ca metodă într-un bloc Java intern, în forma `{ skip(); }`.
+- Pentru a înlesni generarea **cât mai multor erori semantice**,
+    puteți preciza în anumite situații tipul unei expresii, **chiar
+    dacă** subexpresiile conțin erori de tip. Spre exemplu, se poate
+    considera că tipul expresiei `not 5` este `Bool`, chiar dacă
+    operandul `5` are în mod evident tipul eronat `Int`, în loc de
+    `Bool`.
 
-- După ce finalizați implementarea etapei de analiză lexicală, copiați fișierul `CoolLexer.tokens` din pachetul `cool.lexer` în pachetul `cool.parser`, pentru ca analizorul sintactic să aibă acces la categoriile lexicale.
+- Pentru testele 1 - 17, care **nu** abordează `SELF_TYPE`, puteți considera că tipul lui **`self`** din clasa `C` este `C`, în loc de `SELF_TYPE(C)`.
 
-- Regula sintactică principală se numește `program`.
+- Având în vedere că erori diferite pot fi generate în treceridiferite, acestea nu vor avea o ordine fixă. Acest lucru nu este oproblemă, deoarece modulul de testare **ignoră** ordinea generării erorilor.
 
-- În cadrul nodurilor de **AST**, veți reține obiecte `Token`, care includ atât lexemul relevant nodului curent, cât și linia și coloanadin fișier la care începe lexemul.
-    Aceste informații vor fi importante pentru afișarea AST-ului în tema 1 și a erorilor     semantice în tema 2.
-    De asemenea, tot în pregătirea temei 2, este util să rețineți încă de acum în nodurile de AST obiectele `ParserRuleContext`, aferente arborelui de derivare generat de ANTLR.
-    Acestea vor fi utile pentru afișarea numelui de fișier în care a apărut o anumită eroare semantică.
-
-- Arhiva încărcată pe **Moodle** va conține doar directorul conținutul directorului `src/`.
+- Metoda `SymbolTable.error()` primește drept parametri, pe lângă mesajul de eroare, **informație de context** din arborele de derivare generat de ANTLR (obiecte `Context` și `Token`), în vederea afișării fișierului, liniei și coloanei la care a apărut eroarea.
+Membrul `fileNames` din clasa `Compiler` conține asocieri între obiectele context aferente claselor Cool și numele fișierelor Cool în care aceste clase sunt definite.
+La primirea unui obiect context corespunzător unei erori, metoda `SymbolTable.error()` urmărește calea ascendentă către contextul strămoș aferent clasei Cool conținătoare, și consultă membrul `fileNames` pentru a determina numele fișierului asociat acestei clase.
+Prin urmare, veți valorifica obiectele `Context` și `Token` reținute în nodurile de AST în tema anterioară.
 
 ## Referințe
 

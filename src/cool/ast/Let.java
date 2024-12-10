@@ -1,5 +1,6 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;
@@ -8,8 +9,8 @@ public class Let extends Expression {
     private List<LocalVarDef> localVarDefs;
     private Expression body;
 
-    public Let(Token token, List<LocalVarDef> localVarDefs, Expression body) {
-        super(token);
+    public Let(ParserRuleContext ctx, Token token, List<LocalVarDef> localVarDefs, Expression body) {
+        super(token, ctx);
         this.localVarDefs = localVarDefs;
         this.body = body;
     }
@@ -29,5 +30,9 @@ public class Let extends Expression {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

@@ -1,5 +1,6 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class LocalVarDef extends ASTNode {
@@ -7,8 +8,8 @@ public class LocalVarDef extends ASTNode {
     private String type;
     private Expression init;
 
-    public LocalVarDef(Token token, String name, String type, Expression init) {
-        super(token);
+    public LocalVarDef(ParserRuleContext ctx, Token token, String name, String type, Expression init) {
+        super(token, ctx);
         this.name = name;
         this.type = type;
         this.init = init;
@@ -30,5 +31,9 @@ public class LocalVarDef extends ASTNode {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

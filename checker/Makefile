@@ -7,10 +7,10 @@ build:
 	java -jar $(ANTLR) -lib cool/lexer -listener -visitor cool/parser/CoolParser.g4
 
 tester:
-	javac -cp $(CLASSPATH) cool/tester/Tester1.java
+	javac -cp $(CLASSPATH) cool/tester/Tester2.java
 
 run:
-	java -cp $(CLASSPATH) cool.tester.Tester1
+	java -cp $(CLASSPATH) cool.tester.Tester2
 
 clean:
 	@find . -name '*.class' -exec rm -rf {} \;

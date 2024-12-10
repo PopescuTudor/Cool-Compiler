@@ -1,5 +1,6 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;
@@ -10,8 +11,8 @@ public class Dispatch extends Expression {
     private String methodName;
     private List<Expression> args;
 
-    public Dispatch(Token token, Expression obj, String type, String methodName, List<Expression> args) {
-        super(token);
+    public Dispatch(ParserRuleContext ctx, Token token, Expression obj, String type, String methodName, List<Expression> args) {
+        super(token, ctx);
         this.obj = obj;
         this.type = type;
         this.methodName = methodName;
@@ -37,5 +38,9 @@ public class Dispatch extends Expression {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

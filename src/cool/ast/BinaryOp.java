@@ -1,5 +1,6 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class BinaryOp extends Expression {
@@ -7,8 +8,8 @@ public class BinaryOp extends Expression {
     private Expression left;
     private Expression right;
 
-    public BinaryOp(Token token, String op, Expression left, Expression right) {
-        super(token);
+    public BinaryOp(ParserRuleContext ctx, Token token, String op, Expression left, Expression right) {
+        super(token, ctx);
         this.op = op;
         this.left = left;
         this.right = right;
@@ -27,5 +28,9 @@ public class BinaryOp extends Expression {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

@@ -1,5 +1,6 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;
@@ -10,8 +11,8 @@ public class Method extends Feature {
     private String returnType;
     private Expression body;
 
-    public Method(Token token, String name, List<Formal> formals, String returnType, Expression body) {
-        super(token);
+    public Method(ParserRuleContext ctx, Token token, String name, List<Formal> formals, String returnType, Expression body) {
+        super(token, ctx);
         this.name = name;
         this.formals = formals;
         this.returnType = returnType;
@@ -35,5 +36,9 @@ public class Method extends Feature {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

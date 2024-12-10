@@ -1,10 +1,10 @@
 #!/bin/bash
 
-SRC_PATH="../src/cool"
+SRC_PATH="../src"
 
 setup()
 {
-    cp -r "$SRC_PATH/"* cool/
+    cp -r --no-clobber $SRC_PATH/* .
     make build
     make tester
 }

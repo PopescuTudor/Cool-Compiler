@@ -1,5 +1,6 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;
@@ -9,8 +10,8 @@ public class ClassNode extends ASTNode {
     private String parent;
     private List<Feature> features;
 
-    public ClassNode(Token token, String name, String parent, List<Feature> features) {
-        super(token);
+    public ClassNode(ParserRuleContext ctx, Token token, String name, String parent, List<Feature> features) {
+        super(token, ctx);
         this.name = name;
         this.parent = parent;
         this.features = features;
@@ -34,5 +35,21 @@ public class ClassNode extends ASTNode {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getParent() {
+        return parent;
+    }
+
+    public List<Feature> getFeatures() {
+        return features;
     }
 }

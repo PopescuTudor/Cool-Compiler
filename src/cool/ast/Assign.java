@@ -1,13 +1,15 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class Assign extends Expression {
     private String id;
     private Expression expr;
 
-    public Assign(Token start, String id, Expression expr) {
-        super(start);
+    public Assign(ParserRuleContext ctx, Token start, String id, Expression expr) {
+        super(start, ctx);
         this.id = id;
         this.expr = expr;
     }
@@ -25,5 +27,9 @@ public class Assign extends Expression {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

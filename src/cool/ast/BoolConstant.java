@@ -1,12 +1,13 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class BoolConstant extends Expression {
     private boolean value;
 
-    public BoolConstant(Token token, boolean value) {
-        super(token);
+    public BoolConstant(ParserRuleContext ctx, Token token, boolean value) {
+        super(token, ctx);
         this.value = value;
     }
 
@@ -21,5 +22,9 @@ public class BoolConstant extends Expression {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

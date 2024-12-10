@@ -1,12 +1,13 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class StringConstant extends Expression {
     private String value;
 
-    public StringConstant(Token token, String value) {
-        super(token);
+    public StringConstant(ParserRuleContext ctx, Token token, String value) {
+        super(token, ctx);
         this.value = value;
     }
 
@@ -21,5 +22,9 @@ public class StringConstant extends Expression {
 
     public int getLine() {
         return token.getLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

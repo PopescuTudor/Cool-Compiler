@@ -1,5 +1,6 @@
 package cool.ast;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class UnaryOp extends Expression {
@@ -7,8 +8,8 @@ public class UnaryOp extends Expression {
     private Expression expr;
 
 
-    public UnaryOp(Token token, String op, Expression expr) {
-        super(token);
+    public UnaryOp(ParserRuleContext ctx, Token token, String op, Expression expr) {
+        super(token, ctx);
         this.op = op;
         this.expr = expr;
     }
@@ -25,5 +26,9 @@ public class UnaryOp extends Expression {
 
     public int getColumn() {
         return token.getCharPositionInLine();
+    }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }
