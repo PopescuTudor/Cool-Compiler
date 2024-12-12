@@ -67,8 +67,6 @@ STRING
         String content = getText().substring(1, getText().length() - 1);
         if (content.indexOf('\u0000') != -1) {
             raiseError("String contains null character");
-        } else if (content.length() > 1024) {
-            raiseError("String constant too long");
         } else {
             StringBuilder processed = new StringBuilder();
             boolean escaped = false;
@@ -89,6 +87,9 @@ STRING
                 } else {
                     processed.append(c);
                 }
+            }
+            if (processed.length() > 1024) {
+                raiseError("String constant too long");
             }
             setText(processed.toString());
         }
