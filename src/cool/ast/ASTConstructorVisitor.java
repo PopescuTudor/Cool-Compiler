@@ -20,8 +20,8 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitClass(CoolParser.ClassContext ctx) {
-        String name = ctx.TYPE_ID(0).getText();
-        String parent = ctx.TYPE_ID().size() > 1 ? ctx.TYPE_ID(1).getText() : null;
+        Token name = ctx.TYPE_ID(0).getSymbol();
+        Token parent = ctx.TYPE_ID().size() > 1 ? ctx.TYPE_ID(1).getSymbol() : null;
         List<Feature> features = new ArrayList<>();
         for (CoolParser.FeatureContext featureCtx : ctx.feature()) {
             features.add((Feature) visit(featureCtx));

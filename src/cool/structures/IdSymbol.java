@@ -1,18 +1,20 @@
 package cool.structures;
 
+import org.antlr.v4.runtime.Token;
+
 public class IdSymbol extends Symbol {
 
-    protected TypeSymbol type;
+    protected Token type;
 
     public IdSymbol(String name) {
         super(name);
     }
 
-    public TypeSymbol getType() {
+    public Token getType() {
         return type;
     }
 
-    public void setType(TypeSymbol type) {
+    public void setType(Token type) {
         this.type = type;
     }
 }

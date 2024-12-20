@@ -10,11 +10,20 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
     public Void visit(Program program) {
 
         currentScope = new DefaultScope(null);
-        currentScope.add(TypeSymbol.INT);
-        currentScope.add(TypeSymbol.STRING);
-        currentScope.add(TypeSymbol.BOOL);
+        currentScope.add(new ClassSymbol("Int", currentScope));
+        currentScope.add(new ClassSymbol("String", currentScope));
+        currentScope.add(new ClassSymbol("Bool", currentScope));
 
+        for (ClassNode classNode : program.classes) {
+            var id = classNode.getName();
+            var classSymbol = new ClassSymbol(id.getText(), currentScope);
+            if (!currentScope.add(new ClassSymbol(id.getText(), currentScope))) {
+                SymbolTable.error(classNode.getCtx(), id, "Class " + id.getText() + " is redefined");
+            } else {
+                currentScope.add(classSymbol);
+            }
 
+        }
         for (ClassNode classNode : program.classes) {
             classNode.accept(this);
         }
@@ -25,38 +34,36 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
     @Override
     public Void visit(ClassNode classNode) {
         var id = classNode.getName();
-//        var type = new TypeSymbol(id.getText());
+
         // class illegal name
-        if(classNode.getName().equals("SELF_TYPE")) {
-            SymbolTable.error(classNode.getCtx(), classNode.getToken(), "Class has illegal name " + id);
+        if(classNode.getName().getText().equals("SELF_TYPE")) {
+            SymbolTable.error(classNode.getCtx(), classNode.getName(), "Class has illegal name " + id.getText());
             return null;
         }
         // class redefinition
-        var classSymbol = new ClassSymbol(id, currentScope);
-        if(!currentScope.add(classSymbol)) {
-            SymbolTable.error(classNode.getCtx(), classNode.getToken(), "Class " +  id + " is redefined");
-            return null;
-        }
+        var classSymbol = new ClassSymbol(id.getText(), currentScope);
+        currentScope = classSymbol;
 
         // class illegal parent
         if (classNode.getParent() != null) {
             var parent = classNode.getParent();
-            if (parent.equals("Int") || parent.equals("String") || parent.equals("Bool") || parent.equals("SELF_TYPE")) {
-                SymbolTable.error(classNode.getCtx(), classNode.getToken(), "Class " + id + " has illegal parent " + parent);
-                currentScope = classSymbol;
+            if (parent.getText().equals("Int") || parent.getText().equals("String") || parent.getText().equals("Bool")
+                    || parent.getText().equals("SELF_TYPE")) {
+                SymbolTable.error(classNode.getCtx(), classNode.getParent(), "Class " + id.getText() +
+                        " has illegal parent " + parent.getText());
+                currentScope = currentScope.getParent();
                 return null;
             }
-//            var parentSymbol = currentScope.lookup(parent);
-//            if (parentSymbol == null) {
-//                SymbolTable.error(classNode.getCtx(), classNode.getToken(), "Class " + id + " has undefined parent " + parent);
-//                currentScope = classSymbol;
-//                return null;
-//            }
+            var parentSymbol = currentScope.lookup(parent.getText());
+            if (parentSymbol == null) {
+                SymbolTable.error(classNode.getCtx(), classNode.getParent(), "Class " + id.getText() +
+                        " has undefined parent " + parent.getText());
+                return null;
+            }
         }
 
 
 
-        currentScope = classSymbol;
 
         for (Feature feature : classNode.getFeatures()) {
             feature.accept(this);

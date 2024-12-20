@@ -6,11 +6,11 @@ import org.antlr.v4.runtime.Token;
 import java.util.List;
 
 public class ClassNode extends ASTNode {
-    private String name;
-    private String parent;
+    private Token name;
+    private Token parent;
     private List<Feature> features;
 
-    public ClassNode(ParserRuleContext ctx, Token token, String name, String parent, List<Feature> features) {
+    public ClassNode(ParserRuleContext ctx, Token token, Token name, Token parent, List<Feature> features) {
         super(token, ctx);
         this.name = name;
         this.parent = parent;
@@ -20,9 +20,9 @@ public class ClassNode extends ASTNode {
     @Override
     public void print(int indentation) {
         System.out.println(" ".repeat(indentation) + "class");
-        System.out.println(" ".repeat(indentation + 2) + name);
+        System.out.println(" ".repeat(indentation + 2) + name.getText());
         if (parent != null) {
-            System.out.println(" ".repeat(indentation + 2) + parent);
+            System.out.println(" ".repeat(indentation + 2) + parent.getText());
         }
         for (Feature feature : features) {
             feature.print(indentation + 2);
@@ -41,11 +41,11 @@ public class ClassNode extends ASTNode {
         return visitor.visit(this);
     }
 
-    public String getName() {
+    public Token getName() {
         return name;
     }
 
-    public String getParent() {
+    public Token getParent() {
         return parent;
     }
 
