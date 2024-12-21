@@ -135,14 +135,11 @@ public class Compiler {
         ASTConstructorVisitor astConstructor = new ASTConstructorVisitor();
         ASTNode ast = astConstructor.visit(globalTree);
 
-        // semantic analysis
-
-
         var definitionPassVisitor = new DefinitionPassVisitor();
         ast.accept(definitionPassVisitor);
 
-//        var resolutionPassVisitor = new ResolutionPassVisitor(definitionPassVisitor.getGlobalScope());
-//        ast.accept(resolutionPassVisitor);
+        var resolutionPassVisitor = new ResolutionPassVisitor(definitionPassVisitor.getScope());
+        ast.accept(resolutionPassVisitor);
 
         if (SymbolTable.hasSemanticErrors()) {
             System.err.println("Compilation halted");

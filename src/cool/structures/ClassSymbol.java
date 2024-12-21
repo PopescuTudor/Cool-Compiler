@@ -1,5 +1,7 @@
 package cool.structures;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,6 +10,15 @@ public class ClassSymbol extends Symbol implements Scope {
     protected Map<String, Symbol> symbols = new LinkedHashMap<>();
     protected Map<String, Symbol> methods = new LinkedHashMap<>();
     protected Scope parent;
+    protected ClassSymbol parentClass;
+
+    public void setParentClass(ClassSymbol parentClass) {
+        this.parentClass = parentClass;
+    }
+
+    public ClassSymbol getParentClass() {
+        return parentClass;
+    }
 
     public ClassSymbol(String name, Scope parent) {
         super(name);

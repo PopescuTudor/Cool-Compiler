@@ -3,27 +3,55 @@ package cool.structures;
 import cool.ast.*;
 
 public class DefinitionPassVisitor implements ASTVisitor<Void> {
+    private DefaultScope defaultScope;
     private Scope currentScope;
 
+    public DefaultScope getScope() {
+        return defaultScope;
+    }
 
     @Override
     public Void visit(Program program) {
 
-        currentScope = new DefaultScope(null);
-        currentScope.add(new ClassSymbol("Int", currentScope));
-        currentScope.add(new ClassSymbol("String", currentScope));
-        currentScope.add(new ClassSymbol("Bool", currentScope));
+        defaultScope = new DefaultScope(null);
+        defaultScope.add(new ClassSymbol("Int", defaultScope));
+        defaultScope.add(new ClassSymbol("String", defaultScope));
+        defaultScope.add(new ClassSymbol("Bool", defaultScope));
 
         for (ClassNode classNode : program.classes) {
             var id = classNode.getName();
-            var classSymbol = new ClassSymbol(id.getText(), currentScope);
-            if (!currentScope.add(new ClassSymbol(id.getText(), currentScope))) {
-                SymbolTable.error(classNode.getCtx(), id, "Class " + id.getText() + " is redefined");
-            } else {
-                currentScope.add(classSymbol);
-            }
+            var classSymbol = new ClassSymbol(id.getText(), defaultScope);
+            classSymbol.setCtx(classNode.getCtx());
 
+            if (!defaultScope.add(classSymbol)) {
+                SymbolTable.error(classNode.getCtx(), id, "Class " + id.getText() + " is redefined");
+                classSymbol.setProblematic(true);
+            }
         }
+
+        for (ClassNode classNode : program.classes) {
+            var id = classNode.getName();
+            var classSymbol = (ClassSymbol) defaultScope.lookup(id.getText());
+
+            if (classNode.getParent() != null && !classSymbol.isProblematic()) {
+                var parentName = classNode.getParent().getText();
+                var parentSymbol = (ClassSymbol) defaultScope.lookup(parentName);
+
+                if (parentSymbol == null) {
+                    SymbolTable.error(classNode.getCtx(), classNode.getParent(),
+                            "Class " + id.getText() + " has undefined parent " + parentName);
+                    classSymbol.setProblematic(true);
+                } else if (parentName.equals("Int") || parentName.equals("String") ||
+                        parentName.equals("Bool") || parentName.equals("SELF_TYPE")) {
+                    SymbolTable.error(classNode.getCtx(), classNode.getParent(),
+                            "Class " + id.getText() + " has illegal parent " + parentName);
+                    classSymbol.setProblematic(true);
+                } else {
+                    classSymbol.setParentClass(parentSymbol);
+                }
+            }
+        }
+
         for (ClassNode classNode : program.classes) {
             classNode.accept(this);
         }
@@ -40,36 +68,11 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
             SymbolTable.error(classNode.getCtx(), classNode.getName(), "Class has illegal name " + id.getText());
             return null;
         }
-        // class redefinition
-        var classSymbol = new ClassSymbol(id.getText(), currentScope);
-        currentScope = classSymbol;
-
-        // class illegal parent
-        if (classNode.getParent() != null) {
-            var parent = classNode.getParent();
-            if (parent.getText().equals("Int") || parent.getText().equals("String") || parent.getText().equals("Bool")
-                    || parent.getText().equals("SELF_TYPE")) {
-                SymbolTable.error(classNode.getCtx(), classNode.getParent(), "Class " + id.getText() +
-                        " has illegal parent " + parent.getText());
-                currentScope = currentScope.getParent();
-                return null;
-            }
-            var parentSymbol = currentScope.lookup(parent.getText());
-            if (parentSymbol == null) {
-                SymbolTable.error(classNode.getCtx(), classNode.getParent(), "Class " + id.getText() +
-                        " has undefined parent " + parent.getText());
-                return null;
-            }
-        }
-
-
-
 
         for (Feature feature : classNode.getFeatures()) {
             feature.accept(this);
         }
 
-        currentScope = currentScope.getParent();
         return null;
     }
 

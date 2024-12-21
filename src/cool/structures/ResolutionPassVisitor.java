@@ -1,18 +1,61 @@
 package cool.structures;
 
 import cool.ast.*;
+import org.antlr.v4.runtime.Token;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
+    private DefaultScope defaultScope;
+
+    public ResolutionPassVisitor(DefaultScope defaultScope) {
+        this.defaultScope = defaultScope;
+    }
+
     @Override
     public Void visit(Program program) {
+        for(ClassNode classNode : program.classes){
+            classNode.accept(this);
+        }
         return null;
     }
 
     @Override
     public Void visit(ClassNode classNode) {
+        var classSymbol = (ClassSymbol) defaultScope.lookup(classNode.getName().getText());
+
+        if (classSymbol == null) {
+            return null;
+        }
+        checkInheritanceCycles(classSymbol, classNode);
+
         return null;
+
     }
+
+    private void checkInheritanceCycles(ClassSymbol classSymbol, ClassNode classNode) {
+
+        ClassSymbol current = classSymbol;
+        Map<String, Boolean> dfsVisited = new HashMap<>();
+
+        while (current != null) {
+            String className = current.getName();
+            if (dfsVisited.containsKey(className)) {
+                SymbolTable.error(current.getCtx(), classNode.getName(),
+                        "Inheritance cycle for class " + className);
+                return;
+            }
+            dfsVisited.put(className, true);
+
+            current = current.getParentClass();
+
+        }
+    }
+
 
     @Override
     public Void visit(Attribute attribute) {
