@@ -15,13 +15,6 @@ public class SymbolTable {
     public static void defineBasicClasses() {
         globals = new DefaultScope(null);
         semanticErrors = false;
-
-//        globals.add(new ClassSymbol("OBJECT", globals));
-//        globals.add(new ClassSymbol("IO", globals));
-//        globals.add(new ClassSymbol("INT", globals));
-//        globals.add(new ClassSymbol("STRING", globals));
-//        globals.add(new ClassSymbol("BOOL", globals));
-//        globals.add(new ClassSymbol("SELF_TYPE", globals));
     }
     
     /**
