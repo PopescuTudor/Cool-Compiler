@@ -5,10 +5,10 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class Assign extends Expression {
-    private String id;
+    private Id id;
     private Expression expr;
 
-    public Assign(ParserRuleContext ctx, Token start, String id, Expression expr) {
+    public Assign(ParserRuleContext ctx, Token start, Id id, Expression expr) {
         super(start, ctx);
         this.id = id;
         this.expr = expr;
@@ -31,5 +31,13 @@ public class Assign extends Expression {
 
     public <T> T accept(ASTVisitor<T> visitor) {
         return visitor.visit(this);
+    }
+
+    public Id getId() {
+        return id;
+    }
+
+    public Expression getExpr() {
+        return expr;
     }
 }

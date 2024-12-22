@@ -41,6 +41,10 @@ public class LocalVarDef extends ASTNode {
         return type;
     }
 
+    public Expression getInit() {
+        return init;
+    }
+
     public <T> T accept(ASTVisitor<T> visitor) {
         return visitor.visit(this);
     }

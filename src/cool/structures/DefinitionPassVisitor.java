@@ -21,6 +21,9 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
         defaultScope.add(new ClassSymbol("String", defaultScope));
         defaultScope.add(new ClassSymbol("Bool", defaultScope));
         defaultScope.add(new ClassSymbol("Object", defaultScope));
+        defaultScope.add(new ClassSymbol("self", defaultScope));
+
+        currentScope = defaultScope;
 
         for (ClassNode classNode : program.classes) {
             var id = classNode.getName();
@@ -71,6 +74,8 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
             return null;
         }
 
+        currentScope = new DefaultScope(currentScope);
+
         if(classNode.getName().getText().equals("SELF_TYPE")) {
             SymbolTable.error(classNode.getCtx(), classNode.getName(), "Class has illegal name " + id.getText());
             return null;
@@ -79,7 +84,6 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
         for (Feature feature : classNode.getFeatures()) {
             if (feature instanceof Attribute) {
                 var attribute = (Attribute) feature;
-
                 attribute.setParentClass(classSymbol);
 
                 if (attribute.getName().getText().equals("self")) {
@@ -87,7 +91,7 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
                             "Class " + id.getText() + " has attribute with illegal name self");
                 }
 
-                if(classSymbol.symbols.containsKey(attribute.getName().getText())
+                if (classSymbol.symbols.containsKey(attribute.getName().getText())
                         && !(classSymbol.symbols.get(attribute.getName().getText()) instanceof MethodSymbol)) {
                     attribute.setRedefined(true);
                     SymbolTable.error(attribute.getCtx(), attribute.getName(),
@@ -97,12 +101,17 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
                     idSymbol.setType(attribute.getType());
                     idSymbol.setCtx(attribute.getCtx());
                     classSymbol.add(idSymbol);
+                    currentScope.add(idSymbol);
                 }
-            } else if (feature instanceof Method) {
+            }
+        }
+        for (Feature feature : classNode.getFeatures()) {
+            if (feature instanceof Method) {
                 var method = (Method) feature;
                 method.setParentClass(classSymbol);
 
-                if(classSymbol.symbols.containsKey(method.getName().getText())) {
+                if(classSymbol.symbols.containsKey(method.getName().getText())
+                        && classSymbol.symbols.get(method.getName().getText()) instanceof MethodSymbol) {
                     method.setRedefined(true);
                     SymbolTable.error(method.getCtx(), method.getName(),
                             "Class " + id.getText() + " redefines method " + method.getName().getText());
@@ -111,12 +120,15 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
                     methodSymbol.setCtx(method.getCtx());
                     methodSymbol.setReturnType(method.getReturnType().getText());
                     classSymbol.add(methodSymbol);
+                    currentScope.add(methodSymbol);
 
                 }
             }
 
             feature.accept(this);
         }
+
+        currentScope = currentScope.getParent();
         return null;
     }
 
@@ -133,6 +145,8 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
         if (classSymbol == null) {
             return null;
         }
+
+        currentScope = new DefaultScope(currentScope);
 
         Set<String> parameterNames = new HashSet<>();
 
@@ -169,6 +183,11 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
                                 paramName + " with undefined type " + paramType);
             }
 
+            var idSymbol = new IdSymbol(paramName);
+            idSymbol.setType(formal.getType());
+            idSymbol.setCtx(formal.getCtx());
+            currentScope.add(idSymbol);
+
             formal.accept(this);
         }
 
@@ -176,6 +195,7 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
             method.getBody().accept(this);
         }
 
+        currentScope = currentScope.getParent();
 
         return null;
     }
@@ -192,6 +212,8 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
 
     @Override
     public Void visit(BinaryOp binaryOp) {
+        binaryOp.getLeft().accept(this);
+        binaryOp.getRight().accept(this);
         return null;
     }
 
@@ -202,6 +224,8 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
 
     @Override
     public Void visit(Let let) {
+        currentScope = new DefaultScope(currentScope);
+
 
         for (LocalVarDef localVarDef : let.getLocalVarDefs()) {
             var varName = localVarDef.getName().getText();
@@ -218,11 +242,22 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
                 SymbolTable.error(localVarDef.getCtx(), localVarDef.getType(),
                         "Let variable " + varName + " has undefined type " + varType);
             }
+            if (localVarDef.getInit() != null) {
+                localVarDef.getInit().accept(this);
+            }
+            var idSymbol = new IdSymbol(varName);
+            idSymbol.setType(localVarDef.getType());
+            idSymbol.setCtx(localVarDef.getCtx());
+            currentScope.add(idSymbol);
+
         }
+
 
         if (let.getBody() != null) {
             let.getBody().accept(this);
         }
+
+        currentScope = currentScope.getParent();
 
         return null;
     }
@@ -250,6 +285,11 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
         var varName = caseBranch.getName().getText();
         var varType = caseBranch.getType().getText();
 
+        currentScope = new DefaultScope(currentScope);
+        var idSymbol = new IdSymbol(varName);
+        idSymbol.setType(caseBranch.getType());
+        idSymbol.setCtx(caseBranch.getCtx());
+        currentScope.add(idSymbol);
         if (varName.equals("self")) {
             SymbolTable.error(caseBranch.getCtx(), caseBranch.getName(),
                     "Case variable has illegal name self");
@@ -265,6 +305,7 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
         if (caseBranch.getBody() != null) {
             caseBranch.getBody().accept(this);
         }
+        currentScope = currentScope.getParent();
 
         return null;
     }
@@ -272,8 +313,13 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
 
     @Override
     public Void visit(Block block) {
+        for (Expression expression : block.getExpressions()) {
+            expression.accept(this);
+        }
         return null;
     }
+
+
 
     @Override
     public Void visit(Dispatch dispatch) {
@@ -302,8 +348,18 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
 
     @Override
     public Void visit(Id id) {
+        id.setScope(currentScope);
+        var idName = id.getName().getText();
+
+        var symbol = currentScope.lookup(idName);
+        if (symbol == null) {
+            SymbolTable.error(id.getCtx(), id.getToken(),
+                    "Undefined identifier " + idName);
+        }
+
         return null;
     }
+
 
     @Override
     public Void visit(IntConstant intConstant) {
@@ -322,6 +378,11 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
 
     @Override
     public Void visit(Assign assign) {
+        assign.getId().accept(this);
+        if (assign.getExpr() != null) {
+            assign.getExpr().accept(this);
+        }
         return null;
     }
+
 }

@@ -44,7 +44,6 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
                 feature.accept(this);
 
             } else if (feature instanceof Method) {
-                // Visit each method
                 feature.accept(this);
             }
         }
@@ -194,6 +193,8 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
     @Override
     public Void visit(BinaryOp binaryOp) {
+        binaryOp.getLeft().accept(this);
+        binaryOp.getRight().accept(this);
         return null;
     }
 
@@ -204,6 +205,10 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
     @Override
     public Void visit(Let let) {
+        for (LocalVarDef localVarDef : let.getLocalVarDefs()) {
+            localVarDef.accept(this);
+        }
+        let.getBody().accept(this);
         return null;
     }
 
@@ -249,6 +254,9 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
     @Override
     public Void visit(Block block) {
+        for (Expression expression : block.getExpressions()) {
+            expression.accept(this);
+        }
         return null;
     }
 
@@ -269,16 +277,26 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
     @Override
     public Void visit(IsVoid isVoid) {
+        isVoid.getExpr().accept(this);
         return null;
     }
 
     @Override
     public Void visit(UnaryOp unaryOp) {
+        unaryOp.getExpr().accept(this);
         return null;
     }
 
     @Override
     public Void visit(Id id) {
+        var idName = id.getName().getText();
+
+        var symbol = id.getScope().lookup(idName);
+        if (symbol == null) {
+            SymbolTable.error(id.getCtx(), id.getToken(),
+                    "Undefined identifier " + idName);
+        }
+
         return null;
     }
 
@@ -297,8 +315,11 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
         return null;
     }
 
+
     @Override
     public Void visit(Assign assign) {
+        assign.getId().accept(this);
+        assign.getExpr().accept(this);
         return null;
     }
 }

@@ -1,12 +1,14 @@
 package cool.ast;
 
+import cool.structures.Scope;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class Id extends Expression {
-    private String name;
+    private Token name;
+    private Scope scope;
 
-    public Id(ParserRuleContext ctx, Token token, String name) {
+    public Id(ParserRuleContext ctx, Token token, Token name) {
         super(token, ctx);
         this.name = name;
     }
@@ -16,8 +18,16 @@ public class Id extends Expression {
         System.out.println(" ".repeat(indentation) + name);
     }
 
-    public String getName() {
-        return token.getText();
+    public Token getName() {
+        return name;
+    }
+
+    public Scope getScope() {
+        return scope;
+    }
+
+    public void setScope(Scope scope) {
+        this.scope = scope;
     }
 
     public int getLine() {

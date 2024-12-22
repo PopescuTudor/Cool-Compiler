@@ -33,4 +33,16 @@ public class BinaryOp extends Expression {
     public <T> T accept(ASTVisitor<T> visitor) {
         return visitor.visit(this);
     }
+
+    public String getOp() {
+        return op;
+    }
+
+    public Expression getLeft() {
+        return left;
+    }
+
+    public Expression getRight() {
+        return right;
+    }
 }

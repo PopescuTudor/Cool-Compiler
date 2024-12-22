@@ -172,7 +172,7 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitId(CoolParser.IdContext ctx) {
-        return new Id(ctx, ctx.start, ctx.OBJECT_ID().getText());
+        return new Id(ctx, ctx.start, ctx.OBJECT_ID().getSymbol());
     }
 
     @Override
@@ -192,8 +192,9 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitAssign(CoolParser.AssignContext ctx) {
-        String id = ctx.OBJECT_ID().getText();
+        Id id = new Id(ctx, ctx.start, ctx.OBJECT_ID().getSymbol());
         Expression expr = (Expression) visit(ctx.expr());
         return new Assign(ctx, ctx.start, id, expr);
     }
+
 }
