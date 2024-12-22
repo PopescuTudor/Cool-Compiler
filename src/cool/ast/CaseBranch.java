@@ -4,11 +4,11 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public class CaseBranch extends ASTNode {
-    private String name;
-    private String type;
+    private Token name;
+    private Token type;
     private Expression body;
 
-    public CaseBranch(ParserRuleContext ctx, Token token, String name, String type, Expression body) {
+    public CaseBranch(ParserRuleContext ctx, Token token, Token name, Token type, Expression body) {
         super(token, ctx);
         this.name = name;
         this.type = type;
@@ -33,5 +33,27 @@ public class CaseBranch extends ASTNode {
 
     public <T> T accept(ASTVisitor<T> visitor) {
         return visitor.visit(this);
+    }
+
+    public Token getName() {
+        return name;
+    }
+
+    public Token getType() {
+        return type;
+    }
+
+    public Expression getBody() {
+        return body;
+    }
+
+    private boolean semanticError = false;
+
+    public void setSemanticError(boolean semanticError) {
+        this.semanticError = semanticError;
+    }
+
+    public boolean hasSemanticError() {
+        return semanticError;
     }
 }

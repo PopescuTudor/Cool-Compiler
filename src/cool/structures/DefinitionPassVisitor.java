@@ -233,13 +233,41 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
 
     @Override
     public Void visit(Case caseNode) {
+        if (caseNode.getExpr() != null) {
+            caseNode.getExpr().accept(this);
+        }
+
+        for (CaseBranch branch : caseNode.getBranches()) {
+            branch.accept(this);
+        }
+
         return null;
     }
 
     @Override
     public Void visit(CaseBranch caseBranch) {
+        var varName = caseBranch.getName().getText();
+        var varType = caseBranch.getType().getText();
+
+        if (varName.equals("self")) {
+            SymbolTable.error(caseBranch.getCtx(), caseBranch.getName(),
+                    "Case variable has illegal name self");
+            caseBranch.setSemanticError(true);
+        }
+
+        if (varType.equals("SELF_TYPE")) {
+            SymbolTable.error(caseBranch.getCtx(), caseBranch.getType(),
+                    "Case variable " + varName + " has illegal type SELF_TYPE");
+            caseBranch.setSemanticError(true);
+        }
+
+        if (caseBranch.getBody() != null) {
+            caseBranch.getBody().accept(this);
+        }
+
         return null;
     }
+
 
     @Override
     public Void visit(Block block) {

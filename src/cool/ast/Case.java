@@ -36,4 +36,13 @@ public class Case extends Expression {
     public <T> T accept(ASTVisitor<T> visitor) {
         return visitor.visit(this);
     }
+
+    public Expression getExpr() {
+        return expr;
+    }
+
+    public List<CaseBranch> getBranches() {
+        return branches;
+    }
+
 }

@@ -175,6 +175,10 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
             parentClass = parentClass.getParentClass();
         }
 
+        if (method.getBody() != null) {
+            method.getBody().accept(this);
+        }
+
         return null;
     }
 
@@ -210,13 +214,38 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
     @Override
     public Void visit(Case caseNode) {
+        if (caseNode.getExpr() != null) {
+            caseNode.getExpr().accept(this);
+        }
+
+        for (CaseBranch branch : caseNode.getBranches()) {
+            if(!(branch.hasSemanticError())) {
+                branch.accept(this);
+            }
+
+        }
+
         return null;
     }
 
     @Override
     public Void visit(CaseBranch caseBranch) {
+        var varName = caseBranch.getName().getText();
+        var varType = caseBranch.getType().getText();
+
+        var typeSymbol = defaultScope.lookup(varType);
+        if (typeSymbol == null && !caseBranch.hasSemanticError()) {
+            SymbolTable.error(caseBranch.getCtx(), caseBranch.getType(),
+                    "Case variable " + varName + " has undefined type " + varType);
+        }
+
+        if (caseBranch.getBody() != null) {
+            caseBranch.getBody().accept(this);
+        }
+
         return null;
     }
+
 
     @Override
     public Void visit(Block block) {

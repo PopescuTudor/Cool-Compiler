@@ -102,8 +102,8 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
         Expression expr = (Expression) visit(ctx.expr(0));
         List<CaseBranch> branches = new ArrayList<>();
         for (int i = 0; i < ctx.OBJECT_ID().size(); i++) {
-            String name = ctx.OBJECT_ID(i).getText();
-            String type = ctx.TYPE_ID(i).getText();
+            Token name = ctx.OBJECT_ID(i).getSymbol();
+            Token type = ctx.TYPE_ID(i).getSymbol();
             Expression branchExpr = (Expression) visit(ctx.expr(i + 1));
             branches.add(new CaseBranch(ctx, ctx.start, name, type, branchExpr));
         }
