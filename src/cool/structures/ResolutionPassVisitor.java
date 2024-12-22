@@ -42,7 +42,9 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
                 }
 
                 feature.accept(this);
-            } else {
+
+            } else if (feature instanceof Method) {
+                // Visit each method
                 feature.accept(this);
             }
         }
@@ -113,6 +115,66 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
     @Override
     public Void visit(Method method) {
+        var returnType = method.getReturnType().getText();
+        var classSymbol = method.getParentClass();
+
+
+        var typeSymbol = defaultScope.lookup(returnType);
+        if (typeSymbol == null) {
+            SymbolTable.error(method.getCtx(), method.getName(),
+                    "Class " + (method.getParentClass()).getName() +
+                            " has method " + method.getName().getText() +
+                            " with undefined return type " + returnType);
+        }
+
+        ClassSymbol parentClass = classSymbol.getParentClass();
+
+        while (parentClass != null) {
+
+            var overriddenMethodSymbol = parentClass.lookup(method.getName().getText());
+
+            if (overriddenMethodSymbol instanceof MethodSymbol) {
+                var overriddenMethod = (MethodSymbol) overriddenMethodSymbol;
+                if (method.getFormals().size() != overriddenMethod.getFormals().size()) {
+                    SymbolTable.error(method.getCtx(), method.getName(),
+                            "Class " + classSymbol.getName() + " overrides method " +
+                                    method.getName().getText() + " with different number of formal parameters");
+                    break;
+                }
+
+                List<Formal> overriddenFormals = overriddenMethod.getFormals();
+                List<Formal> currentFormals = method.getFormals();
+
+
+                for (int i = 0; i < currentFormals.size(); i++) {
+                    Formal currentFormal = currentFormals.get(i);
+                    Formal overriddenFormal = overriddenFormals.get(i);
+
+                    if (!currentFormal.getType().getText().equals(overriddenFormal.getType().getText())) {
+                        SymbolTable.error(currentFormal.getCtx(), currentFormal.getType(),
+                                "Class " + classSymbol.getName() + " overrides method " +
+                                        method.getName().getText() + " but changes type of formal parameter " +
+                                        currentFormal.getName().getText() + " from " +
+                                        overriddenFormal.getType().getText() + " to " +
+                                        currentFormal.getType().getText());
+                    }
+                }
+
+                String overriddenReturnType = overriddenMethod.getReturnType();
+                String currentReturnType = method.getReturnType().getText();
+
+                if (!currentReturnType.equals(overriddenReturnType)) {
+                    SymbolTable.error(method.getCtx(), method.getReturnType(),
+                            "Class " + classSymbol.getName() + " overrides method " +
+                                    method.getName().getText() + " but changes return type from " +
+                                    overriddenReturnType + " to " + currentReturnType);
+                }
+
+                break;
+            }
+            parentClass = parentClass.getParentClass();
+        }
+
         return null;
     }
 

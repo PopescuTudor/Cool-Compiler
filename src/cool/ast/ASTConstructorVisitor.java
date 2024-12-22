@@ -39,20 +39,20 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitMethod(CoolParser.MethodContext ctx) {
-        String name = ctx.OBJECT_ID().getText();
+        Token name = ctx.OBJECT_ID().getSymbol();
         List<Formal> formals = new ArrayList<>();
         for (CoolParser.FormalContext formalCtx : ctx.formal()) {
             formals.add((Formal) visit(formalCtx));
         }
-        String returnType = ctx.TYPE_ID().getText();
+        Token returnType = ctx.TYPE_ID().getSymbol();
         Expression body = (Expression) visit(ctx.expr());
         return new Method(ctx, ctx.start, name, formals, returnType, body);
     }
 
     @Override
     public ASTNode visitFormal(CoolParser.FormalContext ctx) {
-        String name = ctx.OBJECT_ID().getText();
-        String type = ctx.TYPE_ID().getText();
+        Token name = ctx.OBJECT_ID().getSymbol();
+        Token type = ctx.TYPE_ID().getSymbol();
         return new Formal(ctx, ctx.start, name, type);
     }
 

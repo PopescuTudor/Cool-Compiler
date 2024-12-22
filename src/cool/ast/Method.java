@@ -1,17 +1,20 @@
 package cool.ast;
 
+import cool.structures.ClassSymbol;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;
 
 public class Method extends Feature {
-    private String name;
+    private Token name;
     private List<Formal> formals;
-    private String returnType;
+    private Token returnType;
     private Expression body;
+    protected ClassSymbol parentClass;
+    private boolean redefined = false;
 
-    public Method(ParserRuleContext ctx, Token token, String name, List<Formal> formals, String returnType, Expression body) {
+    public Method(ParserRuleContext ctx, Token token, Token name, List<Formal> formals, Token returnType, Expression body) {
         super(token, ctx);
         this.name = name;
         this.formals = formals;
@@ -40,5 +43,37 @@ public class Method extends Feature {
 
     public <T> T accept(ASTVisitor<T> visitor) {
         return visitor.visit(this);
+    }
+
+    public Token getName() {
+        return name;
+    }
+
+    public List<Formal> getFormals() {
+        return formals;
+    }
+
+    public Token getReturnType() {
+        return returnType;
+    }
+
+    public Expression getBody() {
+        return body;
+    }
+
+    public void setParentClass(ClassSymbol parentClass) {
+        this.parentClass = parentClass;
+    }
+
+    public ClassSymbol getParentClass() {
+        return parentClass;
+    }
+
+    public boolean isRedefined() {
+        return redefined;
+    }
+
+    public void setRedefined(boolean redefined) {
+        this.redefined = redefined;
     }
 }

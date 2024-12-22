@@ -8,7 +8,6 @@ import java.util.Map;
 
 public class ClassSymbol extends Symbol implements Scope {
     protected Map<String, Symbol> symbols = new LinkedHashMap<>();
-    protected Map<String, Symbol> methods = new LinkedHashMap<>();
     protected Scope parent;
     protected ClassSymbol parentClass;
 
@@ -27,17 +26,11 @@ public class ClassSymbol extends Symbol implements Scope {
 
     @Override
     public boolean add(Symbol sym) {
-        if(sym instanceof MethodSymbol) {
-            if (methods.containsKey(sym.getName())) {
-                return false;
-            }
-            methods.put(sym.getName(), sym);
-        } else {
-            if (symbols.containsKey(sym.getName())) {
-                return false;
-            }
-            symbols.put(sym.getName(), sym);
+
+        if (symbols.containsKey(sym.getName())) {
+            return false;
         }
+        symbols.put(sym.getName(), sym);
         return true;
     }
 

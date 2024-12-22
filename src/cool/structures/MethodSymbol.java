@@ -1,16 +1,21 @@
 package cool.structures;
 
+import cool.ast.Formal;
+
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MethodSymbol extends IdSymbol implements Scope{
     protected Scope parent;
     protected Map<String, Symbol> symbols = new LinkedHashMap<>();
+    private List<Formal> formals;
+    private String returnType;
 
-    public MethodSymbol(Scope parent, String name) {
+    public MethodSymbol(Scope parent, String name, List<Formal> formals) {
         super(name);
         this.parent = parent;
-//        this.isGlobal = false;
+        this.formals = formals;
     }
 
     @Override
@@ -39,5 +44,17 @@ public class MethodSymbol extends IdSymbol implements Scope{
     @Override
     public Scope getParent() {
         return parent;
+    }
+
+    public List<Formal> getFormals() {
+        return formals;
+    }
+
+    public String getReturnType() {
+        return returnType;
+    }
+
+    public void setReturnType(String returnType) {
+        this.returnType = returnType;
     }
 }

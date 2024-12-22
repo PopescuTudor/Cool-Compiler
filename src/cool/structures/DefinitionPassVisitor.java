@@ -20,6 +20,7 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
         defaultScope.add(new ClassSymbol("Int", defaultScope));
         defaultScope.add(new ClassSymbol("String", defaultScope));
         defaultScope.add(new ClassSymbol("Bool", defaultScope));
+        defaultScope.add(new ClassSymbol("Object", defaultScope));
 
         for (ClassNode classNode : program.classes) {
             var id = classNode.getName();
@@ -91,11 +92,25 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
                     SymbolTable.error(attribute.getCtx(), attribute.getName(),
                             "Class " + id.getText() + " redefines attribute " + attribute.getName().getText());
                 } else {
-                    // Add the attribute to the class's symbol table
                     var idSymbol = new IdSymbol(attribute.getName().getText());
                     idSymbol.setType(attribute.getType());
                     idSymbol.setCtx(attribute.getCtx());
                     classSymbol.add(idSymbol);
+                }
+            } else if (feature instanceof Method) {
+                var method = (Method) feature;
+                method.setParentClass(classSymbol);
+
+                if(classSymbol.symbols.containsKey(method.getName().getText())) {
+                    method.setRedefined(true);
+                    SymbolTable.error(method.getCtx(), method.getName(),
+                            "Class " + id.getText() + " redefines method " + method.getName().getText());
+                } else {
+                    var methodSymbol = new MethodSymbol(classSymbol, method.getName().getText(), method.getFormals());
+                    methodSymbol.setCtx(method.getCtx());
+                    methodSymbol.setReturnType(method.getReturnType().getText());
+                    classSymbol.add(methodSymbol);
+
                 }
             }
 
@@ -111,6 +126,49 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
 
     @Override
     public Void visit(Method method) {
+
+        var classSymbol = method.getParentClass();
+
+        if (classSymbol == null) {
+            return null;
+        }
+
+        Set<String> parameterNames = new HashSet<>();
+
+        for (Formal formal : method.getFormals()) {
+            var paramName = formal.getName().getText();
+            var paramType = formal.getType().getText();
+
+            if (paramName.equals("self")) {
+                SymbolTable.error(formal.getCtx(), formal.getName(),
+                        "Method " + method.getName().getText() + " of class " +
+                                classSymbol.getName() + " has formal parameter with illegal name self");
+            }
+
+            if (!parameterNames.add(paramName)) {
+                SymbolTable.error(formal.getCtx(), formal.getName(),
+                        "Method " + method.getName().getText() + " of class " +
+                                classSymbol.getName() + " redefines formal parameter " + paramName);
+            }
+
+            if (paramType.equals("SELF_TYPE")) {
+                SymbolTable.error(formal.getCtx(), formal.getType(),
+                        "Method " + method.getName().getText() + " of class " +
+                                classSymbol.getName() + " has formal parameter " +
+                                paramName + " with illegal type SELF_TYPE");
+
+                continue;
+            }
+
+            var typeSymbol = defaultScope.lookup(paramType);
+            if (typeSymbol == null) {
+                SymbolTable.error(formal.getCtx(), formal.getType(),
+                        "Method " + method.getName().getText() + " of class " +
+                                classSymbol.getName() + " has formal parameter " +
+                                paramName + " with undefined type " + paramType);
+            }
+        }
+
         return null;
     }
 
