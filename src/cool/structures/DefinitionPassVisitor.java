@@ -87,7 +87,8 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
                             "Class " + id.getText() + " has attribute with illegal name self");
                 }
 
-                if(classSymbol.symbols.containsKey(attribute.getName().getText())) {
+                if(classSymbol.symbols.containsKey(attribute.getName().getText())
+                        && !(classSymbol.symbols.get(attribute.getName().getText()) instanceof MethodSymbol)) {
                     attribute.setRedefined(true);
                     SymbolTable.error(attribute.getCtx(), attribute.getName(),
                             "Class " + id.getText() + " redefines attribute " + attribute.getName().getText());
