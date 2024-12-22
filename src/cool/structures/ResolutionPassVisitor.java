@@ -3,10 +3,7 @@ package cool.structures;
 import cool.ast.*;
 import org.antlr.v4.runtime.Token;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
@@ -32,6 +29,23 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
             return null;
         }
         checkInheritanceCycles(classSymbol, classNode);
+
+        Set<String> inheritedAttributes = getInheritedAttributes(classSymbol);
+
+        for (Feature feature : classNode.getFeatures()) {
+            if (feature instanceof Attribute) {
+                var attribute = (Attribute) feature;
+
+                if (inheritedAttributes.contains(attribute.getName().getText())) {
+                    SymbolTable.error(attribute.getCtx(), attribute.getName(),
+                            "Class " + classNode.getName().getText() + " redefines inherited attribute " + attribute.getName().getText());
+                }
+
+                feature.accept(this);
+            } else {
+                feature.accept(this);
+            }
+        }
 
         return null;
 
@@ -59,8 +73,43 @@ public class ResolutionPassVisitor  implements ASTVisitor<Void>{
 
     @Override
     public Void visit(Attribute attribute) {
+        var typeToken = attribute.getType();
+        var typeName = typeToken.getText();
+
+        var typeSymbol = defaultScope.lookup(typeName);
+        if (typeSymbol == null && !attribute.isRedefined()) {
+            SymbolTable.error(attribute.getCtx(), typeToken,
+                    "Class " + attribute.getParentClass().getName() + " has attribute " +
+                            attribute.getName().getText() + " with undefined type " + typeName);
+        }
+
         return null;
     }
+
+    private Set<String> getInheritedAttributes(ClassSymbol classSymbol) {
+        Set<String> inheritedAttributes = new HashSet<>();
+        Set<String> visitedClasses = new HashSet<>();
+        ClassSymbol current = classSymbol.getParentClass();
+
+
+        while (current != null) {
+            if (visitedClasses.contains(current.getName())) {
+                break;
+            }
+            visitedClasses.add(current.getName());
+
+            for (Symbol symbol : current.getSymbols().values()) {
+
+                if (symbol instanceof IdSymbol) {
+                    inheritedAttributes.add(symbol.getName());
+                }
+            }
+            current = current.getParentClass();
+        }
+
+        return inheritedAttributes;
+    }
+
 
     @Override
     public Void visit(Method method) {

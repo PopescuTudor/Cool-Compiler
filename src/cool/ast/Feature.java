@@ -7,4 +7,9 @@ public abstract class Feature extends ASTNode {
     public Feature(Token token, ParserRuleContext ctx) {
         super(token, ctx);
     }
+
+    public <T> T accept(ASTVisitor<T> visitor) {
+        return visitor.visit((Attribute) this);
+
+    }
 }

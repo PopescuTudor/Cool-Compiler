@@ -31,8 +31,8 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitAttribute(CoolParser.AttributeContext ctx) {
-        String name = ctx.OBJECT_ID().getText();
-        String type = ctx.TYPE_ID().getText();
+        Token name = ctx.OBJECT_ID().getSymbol();
+        Token type = ctx.TYPE_ID().getSymbol();
         Expression init = ctx.expr() != null ? (Expression) visit(ctx.expr()) : null;
         return new Attribute(ctx, ctx.start, name, type, init);
     }

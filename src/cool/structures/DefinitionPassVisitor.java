@@ -2,6 +2,9 @@ package cool.structures;
 
 import cool.ast.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class DefinitionPassVisitor implements ASTVisitor<Void> {
     private DefaultScope defaultScope;
     private Scope currentScope;
@@ -62,17 +65,42 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
     @Override
     public Void visit(ClassNode classNode) {
         var id = classNode.getName();
+        var classSymbol = (ClassSymbol) defaultScope.lookup(id.getText());
+        if (classSymbol == null) {
+            return null;
+        }
 
-        // class illegal name
         if(classNode.getName().getText().equals("SELF_TYPE")) {
             SymbolTable.error(classNode.getCtx(), classNode.getName(), "Class has illegal name " + id.getText());
             return null;
         }
 
         for (Feature feature : classNode.getFeatures()) {
+            if (feature instanceof Attribute) {
+                var attribute = (Attribute) feature;
+
+                attribute.setParentClass(classSymbol);
+
+                if (attribute.getName().getText().equals("self")) {
+                    SymbolTable.error(attribute.getCtx(), attribute.getName(),
+                            "Class " + id.getText() + " has attribute with illegal name self");
+                }
+
+                if(classSymbol.symbols.containsKey(attribute.getName().getText())) {
+                    attribute.setRedefined(true);
+                    SymbolTable.error(attribute.getCtx(), attribute.getName(),
+                            "Class " + id.getText() + " redefines attribute " + attribute.getName().getText());
+                } else {
+                    // Add the attribute to the class's symbol table
+                    var idSymbol = new IdSymbol(attribute.getName().getText());
+                    idSymbol.setType(attribute.getType());
+                    idSymbol.setCtx(attribute.getCtx());
+                    classSymbol.add(idSymbol);
+                }
+            }
+
             feature.accept(this);
         }
-
         return null;
     }
 
