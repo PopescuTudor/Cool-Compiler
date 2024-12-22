@@ -167,7 +167,14 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
                                 classSymbol.getName() + " has formal parameter " +
                                 paramName + " with undefined type " + paramType);
             }
+
+            formal.accept(this);
         }
+
+        if (method.getBody() != null) {
+            method.getBody().accept(this);
+        }
+
 
         return null;
     }
@@ -194,6 +201,28 @@ public class DefinitionPassVisitor implements ASTVisitor<Void> {
 
     @Override
     public Void visit(Let let) {
+
+        for (LocalVarDef localVarDef : let.getLocalVarDefs()) {
+            var varName = localVarDef.getName().getText();
+            var varType = localVarDef.getType().getText();
+
+            if (varName.equals("self")) {
+                SymbolTable.error(localVarDef.getCtx(), localVarDef.getName(),
+                        "Let variable has illegal name self");
+                continue;
+            }
+
+            var typeSymbol = defaultScope.lookup(varType);
+            if (typeSymbol == null) {
+                SymbolTable.error(localVarDef.getCtx(), localVarDef.getType(),
+                        "Let variable " + varName + " has undefined type " + varType);
+            }
+        }
+
+        if (let.getBody() != null) {
+            let.getBody().accept(this);
+        }
+
         return null;
     }
 

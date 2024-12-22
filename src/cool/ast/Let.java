@@ -32,6 +32,14 @@ public class Let extends Expression {
         return token.getCharPositionInLine();
     }
 
+    public List<LocalVarDef> getLocalVarDefs() {
+        return localVarDefs;
+    }
+
+    public Expression getBody() {
+        return body;
+    }
+
     public <T> T accept(ASTVisitor<T> visitor) {
         return visitor.visit(this);
     }

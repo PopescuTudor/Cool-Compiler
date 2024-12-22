@@ -91,8 +91,8 @@ public class ASTConstructorVisitor extends CoolParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitLetDecl(CoolParser.LetDeclContext ctx) {
-        String name = ctx.OBJECT_ID().getText();
-        String type = ctx.TYPE_ID().getText();
+        Token name = ctx.OBJECT_ID().getSymbol();
+        Token type = ctx.TYPE_ID().getSymbol();
         Expression init = ctx.expr() != null ? (Expression) visit(ctx.expr()) : null;
         return new LocalVarDef(ctx, ctx.start, name, type, init);
     }
