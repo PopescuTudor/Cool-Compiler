@@ -1,0 +1,241 @@
+
+
+lines(itemList) ::= <<
+<itemList; separator="\n">
+>>
+
+
+assembleProgram(
+  strConstants,
+  intConstants,
+  classNameEntries,
+  initAndObjTab,
+  prototypes,
+  dispatchTables,
+  functions
+) ::= <<
+    .data
+    .align  2
+
+    .globl  class_nameTab
+    .globl  Int_protObj
+    .globl  String_protObj
+    .globl  bool_const0
+    .globl  bool_const1
+    .globl  Main_protObj
+    .globl  _int_tag
+    .globl  _string_tag
+    .globl  _bool_tag
+
+_int_tag:
+    .word   2
+_string_tag:
+    .word   3
+_bool_tag:
+    .word   4
+
+str_const0:
+    .word   3
+    .word   5
+    .word   String_dispTab
+    .word   int_const0
+    .asciiz ""
+    .align  2
+
+<strConstants>
+
+int_const0:
+    .word   2
+    .word   4
+    .word   Int_dispTab
+    .word   0
+
+<intConstants>
+
+bool_const0:
+    .word   4
+    .word   4
+    .word   Bool_dispTab
+    .word   0
+
+bool_const1:
+    .word   4
+    .word   4
+    .word   Bool_dispTab
+    .word   1
+
+class_nameTab:
+<classNameEntries>
+
+class_objTab:
+<initAndObjTab>
+
+<prototypes>
+
+<dispatchTables>
+
+    .globl  heap_start
+heap_start:
+    .word   0
+
+    .text
+    .globl  Int_init
+    .globl  String_init
+    .globl  Bool_init
+    .globl  Main_init
+    .globl  Main.main
+
+Object_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+
+IO_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     Object_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+
+Int_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     Object_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+
+String_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     Object_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+
+Bool_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     Object_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+
+<functions>
+
+>>
+
+
+stringConstant(idx, tagVal, sizeWords, lengthConst, content) ::= <<
+str_const<idx>:
+    .word   <tagVal>
+    .word   <sizeWords>
+    .word   String_dispTab
+    .word   int_const<lengthConst>
+    .asciiz "<content>"
+    .align  2
+
+>>
+
+
+intConstant(idx, tagVal, intVal) ::= <<
+int_const<idx>:
+    .word   <tagVal>
+    .word   4
+    .word   Int_dispTab
+    .word   <intVal>
+
+>>
+
+
+protoObject(clsName, tagVal, sizeWords, attrs) ::= <<
+<clsName>_protObj:
+    .word   <tagVal>
+    .word   <sizeWords>
+    .word   <clsName>_dispTab
+
+<lines(attrs)>
+
+>>
+
+
+dispatchVector(clsName, linesArr) ::= <<
+<clsName>_dispTab:
+<lines(linesArr)>
+
+>>
+
+
+initRoutine(clsName, parentName) ::= <<
+<clsName>_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     <parentName>_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+
+>>
+
+
+methodDef(labelName, instructions) ::= <<
+<labelName>:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+<instructions>
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+
+>>
